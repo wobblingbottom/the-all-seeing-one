@@ -1,0 +1,2074 @@
+.save {
+  display: none !important;
+}
+
+.save-state {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #d8d7cf;
+  border-radius: 7px;
+  background: #fff;
+  color: #5e6d36;
+  font-size: 12px;
+  box-shadow: 0 8px 25px #2424191c;
+}
+
+.save-state.error {
+  color: #b54831;
+  border-color: #e8c5bc;
+}
+
+.variable-help {
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.variable-help > small,
+.variable-help span {
+  display: none !important;
+}
+
+.variable-help > div {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 3px !important;
+  margin: 0 !important;
+  color: #999;
+  font-size: 10px;
+}
+
+.variable-help > div::before {
+  content: "Variables: ";
+}
+
+.variable-help code {
+  padding: 0 !important;
+  background: transparent !important;
+  color: #777 !important;
+  font: 10px DM Sans, sans-serif !important;
+}
+
+.variable-help code:not(:last-of-type)::after {
+  content: ",";
+}
+
+.system-toolbar select,
+.system-toolbar .outline,
+.gear-button {
+  height: 46px;
+}
+
+.system-toolbar .outline {
+  padding: 0 18px;
+}
+
+.gear-button {
+  width: 46px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #555;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.gear-button:hover {
+  background: #f6f6f2;
+  color: #171714;
+}
+
+.gear-button img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin: auto;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+#leveling label:has(> #system-name),
+#leveling .card:first-child .cardhead .switch {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: #17171499;
+  cursor: default;
+}
+
+.modal-card {
+  position: relative;
+  width: min(480px, 100%);
+  padding: 28px;
+  border: 1px solid #deddd5;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 30px 90px #1118;
+}
+
+.modal-head,
+.modal-toggle,
+.danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.template-zone {
+  padding: 18px 0;
+  border-top: 1px solid #ecebe5;
+}
+
+.template-zone b,
+.template-zone small {
+  display: block;
+}
+
+.template-zone b {
+  font-size: 13px;
+}
+
+.template-zone small {
+  margin-top: 4px;
+  color: #888;
+  font-size: 10px;
+}
+
+.template-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.template-controls select,
+.template-controls button {
+  height: 40px;
+  border: 1px solid #d7d6cf;
+  border-radius: 5px;
+  background: #fbfbf8;
+  font: 12px DM Sans;
+}
+
+.template-controls select {
+  width: 100%;
+  padding: 0 10px;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+.template-select-wrap {
+  position: relative;
+}
+
+.template-select-wrap::after {
+  display: none;
+}
+
+#template-placeholder,
+#economy-template-placeholder {
+  position: absolute;
+  top: 1px;
+  right: 34px;
+  bottom: 1px;
+  left: 11px;
+  display: flex;
+  align-items: center;
+  color: #171714;
+  font: 12px DM Sans;
+  pointer-events: none;
+  background: var(--discord-input);
+}
+
+#template-system.empty-selection {
+  color: transparent;
+}
+
+#template-system.empty-selection option {
+  color: #171714;
+}
+
+.template-controls button {
+  padding: 0 13px;
+  background: #252521;
+  color: #fff;
+  cursor: pointer;
+}
+
+.template-controls button:disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.template-warning {
+  margin: 9px 0 0 !important;
+  color: #8a6b43 !important;
+  font-size: 10px !important;
+  line-height: 1.45;
+}
+
+#modal-delete-system {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  padding-right: 0;
+  padding-left: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.leaderboard-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.leaderboard-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(90px, 1fr) minmax(310px, 2fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(220px, 300px);
+  gap: 16px;
+  align-items: center;
+  min-height: 46px;
+  padding: 3px;
+  border-bottom: 1px solid var(--discord-border);
+  color: var(--discord-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.leaderboard-header label {
+  width: 100%;
+  margin: 0;
+}
+
+.leaderboard-header > b {
+  text-align: center;
+}
+
+.leaderboard-header input {
+  width: 100%;
+  height: 30px;
+  margin: 0;
+  padding: 5px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--discord-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.leaderboard-header input::placeholder {
+  color: var(--discord-muted);
+  opacity: 1;
+}
+
+.leaderboard-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+}
+
+.leaderboard-avatar-image {
+  width: 34px;
+  height: 34px;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.leaderboard-avatar-decoration {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.leaderboard > div:not(.empty) {
+  grid-template-columns: minmax(220px, 300px) minmax(90px, 1fr) minmax(310px, 2fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(220px, 300px);
+  gap: 16px;
+  height: 66px;
+  min-height: 66px;
+  padding: 3px;
+}
+
+.leaderboard-nameplate-empty {
+  width: 100%;
+}
+
+.leaderboard-nameplate {
+  position: relative;
+  width: min(320px, calc(100% + 28px));
+  height: 60px;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 16 / 3;
+  align-self: center;
+  justify-self: end;
+  overflow: hidden;
+}
+
+#overview > .card {
+  overflow: hidden;
+}
+
+.leaderboard-nameplate:not(.leaderboard-nameplate-left) {
+  justify-self: start;
+}
+
+.leaderboard-nameplate video,
+.leaderboard-nameplate img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.leaderboard-nameplate video {
+  pointer-events: none;
+}
+
+.leaderboard-nameplate-left {
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-nameplate video {
+    animation-play-state: paused;
+  }
+}
+
+.modal-head {
+  margin-bottom: 24px;
+}
+
+.modal-head small {
+  color: #888;
+  font-size: 9px;
+  letter-spacing: .14em;
+}
+
+.modal-head h2 {
+  margin: 5px 0 0;
+  font: 700 21px Manrope;
+}
+
+.modal-close {
+  border: 0;
+  background: transparent;
+  color: #888;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.modal-card input {
+  margin-bottom: 20px;
+}
+
+.modal-toggle,
+.danger-zone {
+  padding: 18px 0;
+  border-top: 1px solid #ecebe5;
+}
+
+.modal-toggle b,
+.danger-zone b {
+  display: block;
+  font-size: 13px;
+}
+
+.modal-toggle small,
+.danger-zone small {
+  display: block;
+  margin-top: 4px;
+  color: #888;
+  font-size: 10px;
+}
+
+.danger-zone {
+  margin-top: 8px;
+  border-bottom: 1px solid #ecebe5;
+}
+
+.danger-zone button {
+  flex: none;
+  padding: 9px 12px;
+  border: 1px solid #e0b8ad;
+  border-radius: 5px;
+  background: #fff;
+  color: #b54831;
+  cursor: pointer;
+}
+
+.danger-zone button:disabled {
+  border-color: #ddd;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Discord Developer Portal-inspired dashboard theme */
+.app {
+  --discord-bg: #1e1f22;
+  --discord-sidebar: #16171a;
+  --discord-surface: #2b2d31;
+  --discord-surface-raised: #313338;
+  --discord-input: #1e1f22;
+  --discord-hover: #3a3c43;
+  --discord-border: #42444a;
+  --discord-text: #f2f3f5;
+  --discord-muted: #b5bac1;
+  --discord-faint: #949ba4;
+  --discord-accent: #f45f77;
+  --discord-accent-hover: #d94f67;
+  background: var(--discord-bg);
+  color: var(--discord-text);
+  overflow-x: hidden;
+}
+
+.sidebar {
+  background: var(--discord-sidebar);
+  color: var(--discord-text);
+  border-right: 1px solid #111214;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tab .tab-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.tab .tab-icon + span {
+  margin-left: 0;
+}
+
+#economy > .economy-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+#economy > .economy-page > .card {
+  border: 0;
+  border-radius: 4px;
+}
+
+#overview > .card,
+#leveling > .card,
+#rewards > .card {
+  border: 0;
+  border-radius: 4px;
+}
+
+.system-toolbar,
+.metric-grid > article {
+  border: 0;
+  border-radius: 4px;
+}
+
+.economy-fields {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: end;
+}
+
+.currency-preview-field {
+  display: none;
+}
+
+.currency-input-wrap {
+  position: relative;
+}
+
+.currency-input-wrap input {
+  padding-right: 56px;
+  color: transparent !important;
+  caret-color: transparent;
+  cursor: pointer;
+}
+
+.currency-symbol-display {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  transform: translateY(-50%);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.currency-symbol-display img { width:22px; height:22px; object-fit:contain; }
+.currency-symbol-display span { color:var(--discord-text); font-size:18px; }
+
+.currency-input-wrap button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--discord-muted);
+  font: 500 26px/1 Manrope, sans-serif;
+  cursor: pointer;
+}
+
+.currency-input-wrap button img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.currency-input-wrap button:hover {
+  background: var(--discord-hover);
+}
+
+.currency-preview {
+  height: 30px;
+  min-height: 0;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  background: var(--discord-input);
+  font: 700 12px Manrope, sans-serif;
+}
+
+.currency-preview-field > span {
+  display: block;
+  color: var(--discord-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.currency-preview-field .currency-preview {
+  margin-top: 8px;
+}
+
+.currency-preview-field > small {
+  display: block;
+  margin-top: 5px;
+  color: var(--discord-faint);
+  font-size: 11px;
+}
+
+.currency-preview img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.currency-preview strong {
+  color: var(--discord-accent);
+}
+.economy-sentence-preview { margin-top:28px; padding:20px 22px; border:1px solid var(--discord-border); border-radius:8px; background:var(--discord-input); }
+.economy-sentence-preview > small { display:none; }
+.economy-sentence-preview p { margin:0; color:var(--discord-text); font-size:12px; line-height:1.5; }
+.economy-sentence-preview img { width:16px; height:16px; object-fit:contain; vertical-align:-3px; }
+[data-economy-key="cashName"],
+[data-economy-key="cashNamePlural"],
+[data-economy-key="bankName"],
+[data-economy-key="wealthName"],
+[data-economy-key="shopName"],
+[data-economy-key="inventoryName"],
+[data-economy-key="leaderboardName"],
+.card textarea,
+.modal-card textarea,
+#system-name,
+#modal-system-name,
+#shop-item-name,
+#shop-item-category,
+.shop-action-value {
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+.currency-name-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.currency-name-pair > input { min-width:0; }
+[data-economy-key="messageReward"]::placeholder { color:color-mix(in srgb, var(--discord-muted) 38%, transparent); opacity:1; }
+
+.emoji-picker {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 10px);
+  left: 0;
+  width: min(520px, 100%);
+  max-height: min(360px, calc(100vh - 10px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 2px solid var(--discord-accent);
+  border-radius: 4px;
+  background: var(--discord-input);
+  box-shadow: 0 12px 28px #0008;
+  scrollbar-color: #f45f77 transparent;
+  scrollbar-width: thin;
+}
+
+.emoji-picker::-webkit-scrollbar { width:8px; }
+.emoji-picker::-webkit-scrollbar-track { background:transparent; }
+.emoji-picker::-webkit-scrollbar-thumb { border-radius:999px; background:#f45f77; }
+.emoji-picker::-webkit-scrollbar-button { display:none; width:0; height:0; }
+
+.emoji-picker-title {
+  margin-bottom: 10px;
+  color: var(--discord-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.emoji-grid {
+  display: block;
+}
+
+.emoji-group + .emoji-group {
+  margin-top: 16px;
+}
+
+.emoji-group h4 {
+  margin: 0 0 8px;
+  color: var(--discord-muted);
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+
+.emoji-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 4px;
+}
+
+.emoji-group-grid button {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 7px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--discord-text);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.emoji-group-grid button:hover {
+  background: color-mix(in srgb, var(--discord-accent) 18%, var(--discord-surface-raised));
+}
+
+.emoji-group-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.emoji-empty {
+  padding: 28px;
+  color: var(--discord-muted);
+  text-align: center;
+}
+
+.shop-items {
+  display: grid;
+  gap: 10px;
+}
+
+.shop-item {
+  display: grid;
+  grid-template-columns: 52px 1fr 36px;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--discord-border);
+  border-radius: 7px;
+  background: var(--discord-input);
+}
+
+.shop-item h3,
+.shop-item p { margin: 0 0 4px; }
+.shop-item small { color: var(--discord-muted); }
+.shop-item-icon,
+.shop-item-icon-preview { display:grid; place-items:center; width:52px; height:52px; border:1px solid var(--discord-border); border-radius:8px; background:var(--discord-input); font:700 25px Manrope; }
+.shop-item-icon img,
+.shop-item-icon-preview img { width:38px; height:38px; object-fit:contain; }
+.shop-emoji-control { position:relative; }
+.shop-emoji-control > select { display:none; }
+#open-shop-emoji-picker { display:flex; align-items:center; justify-content:space-between; width:100%; height:30px; padding:5px 9px; border:1px solid var(--discord-border); border-radius:4px; background:var(--discord-input); color:var(--discord-muted); font:700 11px DM Sans,sans-serif; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
+#open-shop-emoji-picker:hover,
+#open-shop-emoji-picker[aria-expanded="true"] { border-color:var(--discord-accent); outline:1px solid var(--discord-accent); outline-offset:0; }
+#shop-emoji-selection { display:flex; align-items:center; gap:9px; min-width:0; }
+#shop-emoji-selection img { width:18px; height:18px; object-fit:contain; }
+#shop-emoji-picker { width:min(520px, calc(100vw - 40px)); }
+#shop-emoji-picker > input { width:100%; margin-bottom:6px; }
+.shop-emoji-none { width:100%; margin-bottom:6px; padding:9px 12px; border:0; border-radius:4px; background:transparent; color:var(--discord-text); text-align:left; cursor:pointer; }
+.shop-emoji-none:hover { background:var(--discord-hover); }
+
+.shop-item-modal-card {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  scrollbar-color: var(--discord-accent) transparent;
+  scrollbar-width: thin;
+}
+
+.shop-item-modal-card::-webkit-scrollbar { width:8px; }
+.shop-item-modal-card::-webkit-scrollbar-track { background:transparent; }
+.shop-item-modal-card::-webkit-scrollbar-thumb { border-radius:999px; background:var(--discord-accent); }
+.shop-item-modal-card::-webkit-scrollbar-button { display:none; width:0; height:0; }
+
+.shop-item-form { display:flex; flex-direction:column; gap:24px; }
+.shop-prices-field { display:flex; flex-direction:column; gap:10px; padding-bottom:20px; border-bottom:1px solid var(--discord-border); }
+.shop-prices-field > small { color:var(--discord-muted); }
+#shop-item-prices { display:grid; gap:10px; }
+.shop-price-row { display:grid; grid-template-columns:30px 64px minmax(180px,1fr) minmax(100px,.45fr) 30px; align-items:center; gap:10px; min-height:30px; }
+.shop-price-row.first-price { grid-template-columns:30px 64px minmax(180px,1fr) minmax(100px,.45fr) 30px; }
+.shop-price-row.first-price .shop-price-currency { grid-column:2 / 4; }
+.shop-price-row.first-price .shop-price-amount { grid-column:4; }
+.shop-price-row.first-price .remove-shop-price { grid-column:5; }
+.shop-price-row.only-price { grid-template-columns:30px 64px minmax(180px,1fr) minmax(100px,.45fr); }
+.shop-price-row.only-price.missing-system { grid-template-columns:30px 64px minmax(180px,1fr) minmax(100px,.45fr) 30px; }
+.shop-price-row.missing-system .remove-shop-price.hidden { display:block !important; }
+.shop-price-row.missing-system .shop-price-currency select { border-color:#ed4245 !important; }
+.shop-price-row.and-group { position:relative; padding:6px; margin:-6px; background:color-mix(in srgb, var(--discord-accent) 16%, var(--discord-surface-raised)); border-right:2px solid var(--discord-accent); border-left:2px solid var(--discord-accent); }
+.shop-price-row.and-group > * { position:relative; z-index:1; }
+.shop-price-row.and-group-start { border-top:2px solid var(--discord-accent); border-radius:6px 6px 0 0; }
+.shop-price-row.and-group-end { border-bottom:2px solid var(--discord-accent); border-radius:0 0 6px 6px; }
+.shop-price-row.and-group-end + .shop-price-row { margin-top:6px; }
+.shop-price-row:not(.and-group) + .shop-price-row.and-group-start { margin-top:0; }
+.shop-price-row.and-group-middle { border-radius:0; }
+.shop-price-row.and-group-start::after,
+.shop-price-row.and-group-middle::after { content:""; position:absolute; z-index:0; right:-2px; bottom:-10px; left:-2px; height:10px; border-right:2px solid var(--discord-accent); border-left:2px solid var(--discord-accent); background:color-mix(in srgb, var(--discord-accent) 16%, var(--discord-surface-raised)); }
+.shop-price-currency { position:relative; min-width:0; height:30px; }
+.shop-price-currency select { width:100%; padding-left:43px !important; }
+.shop-price-currency-icon { position:absolute; z-index:1; top:50%; left:12px; display:grid; place-items:center; width:21px; height:21px; pointer-events:none; transform:translateY(-50%); }
+.shop-price-currency-icon img { width:21px; height:21px; object-fit:contain; }
+.shop-price-currency-icon span { color:var(--discord-text); font-weight:700; }
+.shop-price-row .shop-price-system,
+.shop-price-row .shop-price-operator,
+.shop-price-row .shop-price-amount,
+.shop-price-row .remove-shop-price {
+  box-sizing:border-box;
+  height:30px !important;
+  min-height:30px;
+  margin:0 !important;
+}
+.shop-price-row .remove-shop-price { width:30px; padding:0 !important; border:1px solid var(--discord-border); border-radius:4px; background:var(--discord-input); color:var(--discord-muted); cursor:pointer; font-size:17px; line-height:1; }
+.shop-price-drag { display:grid; place-items:center; width:30px; height:30px; padding:0; border:1px solid var(--discord-border); border-radius:4px; background:var(--discord-input); color:var(--discord-muted); cursor:grab; }
+.shop-price-drag span { width:12px; height:18px; background:radial-gradient(circle, currentColor 1.5px, transparent 1.8px) 0 0 / 6px 6px; }
+.shop-price-drag:hover { border-color:var(--discord-accent); color:var(--discord-text); background:var(--discord-surface-raised); }
+.shop-price-drag:active { cursor:grabbing; }
+.shop-price-drag { touch-action:none; }
+.shop-price-placeholder { box-sizing:border-box; min-height:30px; border:2px solid var(--discord-border); border-radius:6px; background:var(--discord-input); }
+.shop-price-row.dragging { pointer-events:none; opacity:1; border:1px solid var(--discord-border); border-radius:6px; background:var(--discord-surface-raised); box-shadow:0 12px 28px #0008; }
+.shop-price-row.dragging::after { display:none; }
+.shop-prices-field > .outline { min-height:30px; margin-top:4px; }
+.modal-card select,
+.shop-price-row select,
+#shop-item-emoji {
+  color: var(--discord-muted) !important;
+  background-color: var(--discord-input) !important;
+  border-color: var(--discord-border) !important;
+  color-scheme: dark;
+}
+.modal-card select:focus,
+.shop-price-row select:focus,
+#shop-item-emoji:focus {
+  border-color:var(--discord-accent) !important;
+  outline:1px solid var(--discord-accent);
+  outline-offset:0;
+  box-shadow:none;
+}
+.modal-card select option { color:var(--discord-text); background:var(--discord-input); }
+.shop-tile-price small { margin:0 4px; font-size:10px; }
+.shop-tile-price > small { display:none; }
+.shop-tile-price .joined-price { white-space:nowrap; }
+.economy-issues { position:relative; }
+.economy-issues > b { font-size:22px; line-height:1; }
+.economy-issues .issue-count { position:absolute; top:-7px; right:-7px; display:grid; place-items:center; min-width:20px; height:20px; padding:0 5px; border:2px solid #2b2d31; border-radius:999px; background:#ed4245; color:#fff; font:700 10px Manrope,sans-serif; }
+.economy-issues-list { display:grid; gap:10px; max-height:360px; overflow:auto; }
+.economy-issues-list article { padding:14px; border:1px solid var(--discord-border); border-left:3px solid var(--discord-accent); border-radius:6px; background:var(--discord-input); }
+.economy-issues-list article b { color:var(--discord-text); }
+.economy-issues-list article p { margin:5px 0 0; color:var(--discord-muted); font-size:12px; line-height:1.5; }
+.shop-tile-price img { width:18px; height:18px; object-fit:contain; vertical-align:-4px; }
+.shop-item-form > label { padding-bottom:20px; border-bottom:1px solid var(--discord-border); }
+.shop-item-form > label > small,
+.shop-icon-row label > small { margin:7px 0 12px; font-size:12px; }
+.shop-icon-row { display:grid; grid-template-columns:1fr 80px; align-items:end; gap:20px; padding-bottom:20px; border-bottom:1px solid var(--discord-border); }
+.shop-toggles { border-top:1px solid var(--discord-border); }
+.shop-toggles label { display:flex; align-items:center; gap:16px; padding:16px 4px; border-bottom:1px solid var(--discord-border); }
+.shop-toggles input[type="checkbox"] { width:22px; height:22px; margin:0; padding:0; accent-color:var(--discord-accent); }
+.shop-toggles span { flex:1; }
+.shop-toggles b,
+.shop-toggles small { display:block; }
+.shop-toggles small { margin-top:3px; }
+.shop-builder-section { display:flex; justify-content:space-between; align-items:center; gap:20px; padding-top:6px; }
+.shop-builder-section b,
+.shop-builder-section small { display:block; }
+.shop-builder-section small { margin-top:5px; color:var(--discord-muted); }
+.shop-builder-row { display:grid; grid-template-columns:180px 1fr 150px 36px; align-items:center; gap:10px; padding:12px; border:1px solid var(--discord-border); border-radius:7px; background:var(--discord-input); }
+.action-row { grid-template-columns:180px 150px 1fr 36px; }
+.shop-builder-row select,
+.shop-builder-row input { margin:0; }
+.shop-modal-actions { position:sticky; bottom:-28px; display:flex; justify-content:flex-end; gap:10px; margin:28px -28px -28px; padding:16px 28px; border-top:1px solid var(--discord-border); background:var(--discord-sidebar); }
+
+.shop-card { min-height: 540px; }
+.shop-toolbar { display:flex; justify-content:space-between; align-items:flex-start; gap:28px; margin-bottom:34px; }
+.shop-title-row { display:flex; align-items:center; gap:12px; }
+.shop-title-row h2 { text-transform:uppercase; }
+.shop-title-row span { padding:5px 9px; border-radius:5px; background:#5b5e66; color:#fff; font-size:12px; font-weight:700; }
+.shop-filters { display:flex; align-items:flex-start; gap:10px; }
+.shop-filters label { width:190px; }
+.shop-filters input,
+.shop-filters select { height:44px; margin:0; }
+.shop-options { position:relative; }
+.shop-options summary { height:44px; display:flex; align-items:center; padding:0 16px; border:1px solid var(--discord-border); border-radius:6px; background:var(--discord-input); color:var(--discord-text); font-size:12px; font-weight:700; cursor:pointer; list-style:none; }
+.shop-options > div { position:absolute; z-index:10; top:50px; right:0; width:280px; padding:16px; border:1px solid var(--discord-border); border-radius:7px; background:var(--discord-surface-raised); box-shadow:0 14px 35px #0007; }
+.shop-options label + label { display:block; margin-top:14px; }
+.shop-items { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.shop-item-tile { position:relative; min-height:104px; display:grid; grid-template-columns:52px minmax(0,1fr); grid-template-rows:auto auto; align-content:center; align-items:center; gap:7px 14px; padding:16px 42px 16px 16px; overflow:hidden; border:1px solid var(--discord-border); border-radius:4px; background:var(--discord-input); color:var(--discord-text); text-align:left; }
+.shop-item-tile { cursor:pointer; }
+.shop-item-tile:hover { border-color:var(--discord-accent); background:var(--discord-surface-raised); }
+.shop-item-tile h3 { align-self:end; width:100%; margin:0; overflow:hidden; color:var(--discord-text); font:700 13px Manrope,sans-serif; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+.shop-item-tile h3 { grid-column:2; text-align:left; }
+.shop-tile-icon { grid-row:1 / 3; display:grid; place-items:center; width:52px; height:52px; color:var(--discord-muted); font:700 30px Manrope,sans-serif; }
+.shop-tile-icon img { width:44px; height:44px; object-fit:contain; }
+.shop-tile-price { align-self:start; min-width:0; min-height:20px; display:flex; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:5px; color:var(--discord-muted); font-size:12px; font-weight:700; }
+.shop-item-tile .shop-tile-price { grid-column:2; display:grid; gap:4px; width:100%; }
+.compact-price-row { display:grid; grid-template-columns:auto 18px auto; align-items:center; justify-content:start; gap:5px; min-width:0; }
+.compact-price-row small { margin:0; color:var(--discord-muted); font-size:9px; }
+.compact-price-row img { width:18px; height:18px; object-fit:contain; }
+.compact-price-row strong { color:var(--discord-text); font-size:12px; }
+.compact-price-row:first-child { grid-template-columns:18px auto; }
+.compact-price-row:first-child small { display:none; }
+.more-prices { width:max-content; padding:2px 7px; border-radius:4px; background:var(--discord-surface-raised); color:var(--discord-muted); font-size:10px; }
+.shop-tile-price img { width:18px; height:18px; object-fit:contain; }
+.create-shop-item { display:flex; align-items:center; justify-content:flex-start; gap:14px; }
+.create-shop-item span { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border:2px solid var(--discord-muted); border-radius:4px; color:var(--discord-muted); font:500 28px/1 Manrope,sans-serif; }
+.create-shop-item b { color:var(--discord-text); font-size:12px; text-transform:uppercase; }
+.shop-item-tile .remove-shop-item { position:absolute; top:8px; right:8px; width:26px; height:26px; padding:0; border:1px solid var(--discord-border); border-radius:4px; background:var(--discord-input); color:var(--discord-muted); opacity:0; cursor:pointer; }
+.shop-item-tile:hover .remove-shop-item { opacity:1; }
+.shop-item-tile.has-issue { overflow:visible; border-color:#ed4245; }
+.shop-item-issue-badge { position:absolute; z-index:2; top:-7px; right:-7px; display:grid; place-items:center; min-width:20px; height:20px; padding:0 5px; border:2px solid #2b2d31; border-radius:999px; background:#ed4245; color:#fff; font:700 10px Manrope,sans-serif; }
+
+@media (max-width: 900px) {
+  .shop-toolbar { flex-direction:column; }
+  .shop-filters { width:100%; flex-wrap:wrap; }
+  .shop-filters label { flex:1; min-width:180px; }
+}
+
+
+.sidebar .brand {
+  color: var(--discord-text);
+}
+
+.sidebar .logo {
+  background: var(--discord-accent);
+  color: #fff;
+  transform: none;
+}
+
+.server-picker small,
+.dash header small {
+  color: var(--discord-faint);
+}
+
+.server-picker select {
+  color: var(--discord-text);
+  background: var(--discord-input);
+  border-color: var(--discord-border);
+}
+
+.tab {
+  color: var(--discord-muted);
+}
+
+.tab:hover,
+.tab.active {
+  color: var(--discord-text);
+  background: var(--discord-surface-raised);
+}
+
+.tab.active {
+  border-left-color: var(--discord-accent);
+}
+
+.profile {
+  border-top-color: var(--discord-border);
+}
+
+.profile small,
+.profile button {
+  color: var(--discord-faint);
+}
+
+.avatar {
+  background-color: var(--discord-accent);
+}
+
+.dash {
+  max-width: 1500px;
+  min-width: 0;
+  padding-top: 42px;
+}
+
+.dash h1,
+.card h2,
+.modal-head h2 {
+  color: var(--discord-text);
+  letter-spacing: 0;
+}
+
+.level-tabs {
+  border-bottom-color: var(--discord-border);
+}
+
+.level-tab {
+  color: var(--discord-muted);
+}
+
+.level-tab:hover,
+.level-tab.active {
+  color: var(--discord-text);
+}
+
+.level-tab.active {
+  border-bottom-color: var(--discord-accent);
+}
+
+.system-toolbar,
+.card,
+.metric-grid article {
+  color: var(--discord-text);
+  background: var(--discord-surface);
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.system-toolbar {
+  padding: 20px;
+}
+
+.system-toolbar label,
+.card label,
+.modal-card label {
+  color: var(--discord-muted);
+}
+
+.system-toolbar select,
+input,
+textarea,
+.card select,
+.modal-card input,
+.template-controls select {
+  color: var(--discord-text);
+  background: var(--discord-input);
+  border-color: var(--discord-border);
+}
+
+input:focus,
+textarea:focus,
+.card select:focus,
+.system-toolbar select:focus,
+.template-controls select:focus {
+  border-color: var(--discord-accent);
+  outline: 1px solid var(--discord-accent);
+}
+
+select option {
+  color: var(--discord-text) !important;
+  background: var(--discord-surface-raised) !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+select option:checked {
+  color: #fff !important;
+  background: linear-gradient(var(--discord-accent), var(--discord-accent)) !important;
+}
+
+.outline,
+.gear-button,
+.template-controls button {
+  color: #fff;
+  background: var(--discord-accent);
+  border-color: var(--discord-accent);
+}
+
+.outline:hover,
+.gear-button:hover,
+.template-controls button:hover:not(:disabled) {
+  color: #fff;
+  background: var(--discord-accent-hover);
+  border-color: var(--discord-accent-hover);
+}
+
+.gear-button {
+  font-size: 19px;
+}
+
+.metric-grid small,
+.metric-grid span,
+.card p,
+.rule-note,
+label small {
+  color: var(--discord-faint);
+}
+
+.metric-grid strong {
+  color: var(--discord-text);
+}
+
+.cardhead {
+  border-bottom: 1px solid var(--discord-border);
+  padding-bottom: 20px;
+}
+
+.switch span {
+  background: #4e5058;
+}
+
+.switch input:checked + span {
+  background: var(--discord-accent);
+}
+
+.switch input:checked + span::after {
+  background: #fff;
+}
+
+.leaderboard > div,
+.reward-row {
+  border-top-color: var(--discord-border);
+}
+
+.leaderboard > div:hover {
+  background: #303238;
+}
+
+.leaderboard small,
+.leaderboard code {
+  color: var(--discord-muted);
+}
+
+.level-badge {
+  color: #fff;
+  background: var(--discord-accent);
+}
+
+.arrow,
+.remove {
+  color: var(--discord-faint);
+}
+
+.remove:hover {
+  color: var(--discord-accent);
+}
+
+.rule-heading {
+  color: var(--discord-muted);
+}
+
+.filter-mode,
+.picker-control {
+  color: var(--discord-text) !important;
+  background: var(--discord-input) !important;
+  border-color: var(--discord-border) !important;
+}
+
+.picker-placeholder,
+.picker-arrow {
+  color: var(--discord-faint);
+}
+
+.picker-tag {
+  color: var(--discord-text);
+  background: var(--discord-surface-raised);
+  border-color: #555861;
+}
+
+.picker-tag button {
+  color: var(--discord-accent);
+  border-right-color: var(--discord-border);
+}
+
+.picker-menu {
+  background: var(--discord-surface-raised);
+  border-color: var(--discord-border);
+  box-shadow: 0 12px 32px #0008;
+}
+
+.picker-menu button {
+  color: var(--discord-text);
+  background: var(--discord-surface-raised);
+  border-bottom-color: var(--discord-border);
+}
+
+.picker-menu button:hover,
+.picker-menu button.selected {
+  background: var(--discord-hover);
+}
+
+.picker-menu button span {
+  color: var(--discord-accent);
+}
+
+.variable-help,
+.variable-help code {
+  color: var(--discord-faint) !important;
+}
+
+.empty {
+  color: var(--discord-faint);
+}
+
+.save-state {
+  color: var(--discord-text);
+  background: var(--discord-surface-raised);
+  border-color: var(--discord-border);
+  box-shadow: 0 8px 24px #0008;
+}
+
+.save-state.error {
+  color: #fff;
+  border-color: var(--discord-accent);
+}
+
+.modal-backdrop {
+  background: #000a;
+}
+
+.modal-card {
+  color: var(--discord-text);
+  background: var(--discord-surface);
+  border-color: var(--discord-border);
+  box-shadow: 0 24px 80px #000b;
+}
+
+.modal-head small,
+.modal-toggle small,
+.danger-zone small,
+.template-zone small {
+  color: var(--discord-faint);
+}
+
+.modal-close {
+  color: var(--discord-muted);
+}
+
+.modal-close:hover {
+  color: var(--discord-text);
+}
+
+.modal-toggle,
+.template-zone,
+.danger-zone {
+  border-color: var(--discord-border);
+}
+
+.template-select-wrap::after {
+  border-color: var(--discord-text);
+}
+
+#template-placeholder,
+#economy-template-placeholder {
+  color: var(--discord-text);
+}
+
+.template-controls button:disabled {
+  color: #777b84;
+  background: #3d3f45;
+  border-color: #3d3f45;
+}
+
+.template-warning {
+  color: #d6a4ac !important;
+}
+
+.danger-zone button {
+  color: var(--discord-accent);
+  background: transparent;
+  border-color: var(--discord-accent);
+}
+
+.danger-zone button:hover:not(:disabled) {
+  color: #fff;
+  background: var(--discord-accent);
+}
+
+.danger-zone button:disabled {
+  color: #6d6f76;
+  background: transparent;
+  border-color: #4a4c52;
+}
+
+@media (max-width: 750px) {
+  .economy-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    background: var(--discord-sidebar);
+  }
+
+  .sidebar nav {
+    background: var(--discord-sidebar);
+    border-top: 1px solid var(--discord-border);
+  }
+}
+
+.leaderboard > div:not(.empty) {
+  position: relative;
+  background: transparent;
+}
+
+.leaderboard > div:not(.empty)::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 7px;
+  right: 0;
+  bottom: 7px;
+  left: 0;
+  background: color-mix(in srgb, var(--nameplate-color) 10%, var(--discord-surface));
+  pointer-events: none;
+}
+
+.leaderboard > div:not(.empty) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.leaderboard > div:not(.empty):hover::before {
+  background: color-mix(in srgb, var(--nameplate-color) 16%, var(--discord-surface-raised));
+}
+
+.leaderboard > div:not(.empty) > b,
+.leaderboard > div:not(.empty) > strong,
+.leaderboard > div:not(.empty) > small {
+  text-align: center;
+}
+
+.leaderboard-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 18px;
+  color: var(--discord-muted);
+  font-size: 11px;
+}
+
+.leaderboard-pagination button {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  min-width: 64px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--discord-accent);
+  border-radius: 4px;
+  background: var(--discord-accent);
+  color: #fff;
+  font: 600 11px DM Sans;
+  cursor: pointer;
+}
+
+.leaderboard-pagination button img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+#leaderboard-prev img {
+  --icon-direction: -1;
+  transform: scaleX(-1);
+}
+
+.tab-icon,
+.gear-button img,
+.leaderboard-pagination button img {
+  --icon-direction: 1;
+  transform-origin: center;
+}
+
+#leaderboard-prev img {
+  --icon-direction: -1;
+}
+
+
+.leaderboard-pagination button:hover:not(:disabled) {
+  background: var(--discord-accent-hover);
+  border-color: var(--discord-accent-hover);
+}
+
+.leaderboard-pagination button:disabled {
+  color: #777b84;
+  background: #3d3f45;
+  border-color: #3d3f45;
+  cursor: not-allowed;
+}
+
+/* Nameplates are decorative backgrounds, not leaderboard columns. */
+.leaderboard-header,
+.leaderboard > div:not(.empty) {
+  grid-template-columns: minmax(0, 260px) minmax(90px, 1fr) minmax(310px, 2fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(0, 260px);
+}
+
+.leaderboard-header > b:first-child,
+.leaderboard > div:not(.empty) > b {
+  grid-column: 2;
+}
+
+.leaderboard-header > label,
+.leaderboard > div:not(.empty) > .leaderboard-user {
+  grid-column: 3;
+}
+
+.leaderboard-header > b:nth-of-type(2),
+.leaderboard > div:not(.empty) > strong {
+  grid-column: 4;
+}
+
+.leaderboard-header > b:nth-of-type(3),
+.leaderboard > div:not(.empty) > small {
+  grid-column: 5;
+}
+
+.leaderboard > div:not(.empty) {
+  overflow: hidden;
+}
+
+.leaderboard-nameplate {
+  position: absolute !important;
+  top: 50%;
+  right: 3px;
+  bottom: auto;
+  left: auto;
+  z-index: 1 !important;
+  width: min(240px, 26%);
+  height: 45px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.leaderboard-nameplate-left {
+  right: auto;
+  left: 3px;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.leaderboard-nameplate-empty {
+  display: none;
+}
+
+.leaderboard > div:not(.empty) > b,
+.leaderboard > div:not(.empty) > .leaderboard-user,
+.leaderboard > div:not(.empty) > strong,
+.leaderboard > div:not(.empty) > small {
+  position: relative;
+  z-index: 2;
+}
+
+#economy-leaderboard > div:not(.empty) > strong,
+#economy-leaderboard > div:not(.empty) > small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+#economy-leaderboard > div:not(.empty) > strong img,
+#economy-leaderboard > div:not(.empty) > small img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Match other form controls to the leaderboard user-search field. */
+.card input:not([type="checkbox"]),
+.card select,
+.modal-card input:not([type="checkbox"]),
+.modal-card select,
+.system-toolbar select {
+  height: 30px;
+  padding: 5px 9px;
+  border-radius: 4px;
+  color: var(--discord-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.card textarea,
+.modal-card textarea {
+  padding: 5px 9px;
+  border-radius: 4px;
+  color: var(--discord-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.card input::placeholder,
+.modal-card input::placeholder,
+.card textarea::placeholder,
+.modal-card textarea::placeholder {
+  color: color-mix(in srgb, var(--discord-muted) 55%, transparent);
+  opacity: 1;
+}
+
+.currency-input-wrap button {
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  font-size: 20px;
+}
+
+.currency-input-wrap button img {
+  width: 22px;
+  height: 22px;
+}
+
+.filter-row {
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+}
+
+.filter-mode {
+  height: 30px !important;
+  padding: 5px 9px !important;
+  border-radius: 4px !important;
+  color: var(--discord-muted) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.card select.filter-mode:focus {
+  border-color: var(--discord-accent) !important;
+  outline: 1px solid var(--discord-accent);
+}
+
+.picker-control {
+  min-height: 30px;
+  padding: 4px 32px 4px 8px;
+  border-radius: 4px;
+  gap: 5px;
+}
+
+.picker-placeholder {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.picker-arrow {
+  top: 7px;
+  right: 10px;
+}
+
+.picker-tags {
+  gap: 4px;
+}
+
+.picker-tag {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.rule-heading {
+  margin: 6px 0 9px;
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.roles-heading {
+  margin-top: 20px;
+}
+
+.rule-note {
+  margin-top: 14px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.dash .button,
+.dash .outline,
+.modal-card .button,
+.modal-card .outline,
+.gear-button,
+.template-controls button {
+  height: 30px !important;
+  min-height: 30px;
+  padding: 0 12px !important;
+  border: 0;
+  border-radius: 4px;
+  background: var(--discord-accent);
+  color: #fff;
+  font: 700 11px DM Sans, sans-serif;
+}
+
+.dash .button:hover,
+.dash .outline:hover,
+.modal-card .button:hover,
+.modal-card .outline:hover,
+.gear-button:hover,
+.template-controls button:hover:not(:disabled) {
+  background: var(--discord-accent-hover);
+  color: #fff;
+}
+
+.gear-button {
+  width: 30px;
+  min-width: 30px;
+  padding: 0 !important;
+}
+
+.gear-button img {
+  width: 20px;
+  height: 20px;
+}
+
+.template-controls button:disabled {
+  background: #3d3f45;
+  color: #777b84;
+  cursor: not-allowed;
+}
+
+.leaderboard-pagination button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 4px;
+}
+
+.leaderboard-pagination button img {
+  width: 20px;
+  height: 20px;
+}
+
+.reward-row {
+  grid-template-columns: 100px 30px 1fr 35px;
+  align-items: center;
+  border-top: 0;
+}
+
+.reward-list-header {
+  display: grid;
+  grid-template-columns: 100px 30px 1fr 35px;
+  gap: 15px;
+  padding: 12px 0;
+  border-top: 0;
+  border-bottom: 1px solid var(--discord-border);
+  color: var(--discord-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reward-level,
+.reward-role {
+  height: 30px;
+  margin: 0 !important;
+}
+
+#leveling .form-grid > label:has(> #content-type) {
+  grid-column: 1 / -1;
+}
+#specific-word-field { grid-column:1 / -1; }
+#leveling .form-grid > label:has(> #cooldown) { grid-column:1 / -1; }
+.level-message-divider { grid-column:1 / -1; height:1px; margin:2px 0; background:var(--discord-border); }
+.xp-values-wrap { position:relative; margin-top:8px; background:var(--discord-input); }
+.xp-values-wrap > input { position:relative; z-index:1; margin-top:0 !important; background:transparent !important; color:var(--discord-text) !important; }
+.xp-values-hint { position:absolute; z-index:0; inset:0; display:flex; align-items:center; overflow:hidden; padding:5px 9px; color:color-mix(in srgb, var(--discord-muted) 45%, transparent); font:700 11px DM Sans,sans-serif; letter-spacing:.06em; white-space:pre; pointer-events:none; }
+.xp-values-prefix { visibility:hidden; }
+#min-xp::placeholder,
+#max-xp::placeholder { color:transparent !important; }
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+select,
+select.filter-mode,
+.card select,
+.modal-card select,
+.system-toolbar select,
+.template-controls select {
+  cursor: pointer;
+  padding-right: 28px !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='5' viewBox='0 0 7 5'%3E%3Cpath d='M0 0h7L3.5 5z' fill='%23949ba4'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 7px 5px !important;
+}
+
+.select-popup {
+  position: fixed;
+  z-index: 1000;
+  max-width: calc(100vw - 10px);
+  max-height: min(260px, calc(100vh - 10px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 2px solid var(--discord-accent);
+  border-radius: 4px;
+  background: var(--discord-input);
+  box-shadow: 0 12px 28px #0008;
+  scrollbar-color: #f45f77 transparent;
+  scrollbar-width: thin;
+}
+
+.select-popup::-webkit-scrollbar {
+  width: 8px;
+}
+
+.select-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.select-popup::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #f45f77;
+}
+
+.select-popup::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.select-popup button {
+  display: block;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--discord-text);
+  background: transparent;
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.select-popup button.economy-reward-option { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.select-popup .economy-reward-value { flex:0 0 auto; text-align:right; }
+
+.select-popup button:hover,
+.select-popup button:focus-visible {
+  outline: 0;
+  background: color-mix(in srgb, var(--discord-accent) 18%, var(--discord-surface-raised));
+}
+
+.select-popup button.selected {
+  color: #fff;
+  background: var(--discord-accent);
+}
+
+.select-popup button.selected:has(+ button.selected) {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.select-popup button.selected + button.selected {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.select-popup button.channel-category {
+  color: var(--discord-muted);
+}
+
+.select-popup button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.select-popup-tools {
+  position: sticky;
+  top: -4px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  margin: -4px -4px 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--discord-border);
+  background: var(--discord-input);
+}
+
+.select-popup-tools.search-only {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.select-popup-tools input {
+  min-width: 0;
+  height: 30px;
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  color: var(--discord-text);
+  background: var(--discord-surface-raised);
+  font: 700 11px DM Sans, sans-serif;
+}
+
+.select-popup-tools input:focus {
+  border-color: var(--discord-accent);
+  outline: 1px solid var(--discord-accent);
+}
+
+.select-popup-tools input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.select-popup .select-popup-clear {
+  width: auto;
+  padding: 5px 12px;
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  color: #fff;
+  background: transparent;
+}
+
+.select-popup .select-popup-clear:hover,
+.select-popup .select-popup-clear:focus-visible {
+  background: var(--discord-accent);
+}
+
+.select-popup-option.search-hidden {
+  display: none;
+}
+
+.select-popup-empty {
+  padding: 18px 10px;
+  color: var(--discord-muted);
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Use the leaderboard field treatment for every search input. */
+input[type="search"] {
+  width: 100%;
+  height: 30px;
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  color: var(--discord-muted);
+  background: var(--discord-input);
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+input[type="search"]::placeholder {
+  color: color-mix(in srgb, var(--discord-muted) 55%, transparent);
+  opacity: 1;
+}
+
+input[type="search"]:focus {
+  border-color: var(--discord-accent);
+  outline: 1px solid var(--discord-accent);
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.server-picker select {
+  height: 30px;
+  padding: 5px 28px 5px 9px;
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  color: var(--discord-muted);
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.server-picker select:focus {
+  border-color: var(--discord-accent);
+  outline: 1px solid var(--discord-accent);
+}
+
+.shop-options summary {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.shop-options > div {
+  top: 36px;
+}
+
+.select-popup .select-popup-clear {
+  height: 30px;
+}
+
+/* Keep the access-rule pickers visually consistent with standard dropdowns. */
+.picker-control {
+  color: var(--discord-muted) !important;
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.picker-arrow {
+  top: 50%;
+  width: 7px;
+  height: 5px;
+  font-size: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='5' viewBox='0 0 7 5'%3E%3Cpath d='M0 0h7L3.5 5z' fill='%23949ba4'/%3E%3C/svg%3E");
+  transform: translateY(-50%);
+}
+
+.tag-picker.open .picker-control {
+  border-color: var(--discord-accent) !important;
+  outline: 1px solid var(--discord-accent);
+}
+
+.picker-control.popup-open {
+  border-color: var(--discord-accent) !important;
+  outline: 1px solid var(--discord-accent);
+}
+
+.tag-picker.open .picker-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.picker-menu {
+  max-height: min(260px, calc(100vh - 10px));
+  padding: 4px;
+  border: 2px solid var(--discord-accent);
+  border-radius: 4px;
+  background: var(--discord-input);
+  box-shadow: 0 12px 28px #0008;
+  scrollbar-color: #f45f77 transparent;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+
+.picker-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.picker-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.picker-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #f45f77;
+}
+
+.picker-menu::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.picker-menu button {
+  display: block;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.picker-menu button span {
+  display: none;
+}
+
+.picker-menu button:hover,
+.picker-menu button:focus-visible {
+  outline: 0;
+  background: color-mix(in srgb, var(--discord-accent) 18%, var(--discord-surface-raised));
+}
+
+.picker-menu button.selected {
+  color: #fff;
+  background: var(--discord-accent);
+}
+
+.picker-tags {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--discord-muted);
+  font: 700 11px DM Sans, sans-serif;
+  letter-spacing: .06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.filter-row > *,
+.tag-picker,
+.picker-control {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filter-row.channel-filter-row {
+  grid-template-columns: 110px minmax(135px, .4fr) minmax(0, 1fr);
+}
+
+.category-picker .picker-placeholder {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-picker .picker-placeholder.has-selection {
+  color: var(--discord-muted);
+}
+
+#channel-picker .picker-tag:not(:last-child)::after,
+.category-selection:not(:last-child)::after {
+  content: ", ";
+  color: var(--discord-muted);
+}
+
+.category-selection {
+  color: var(--discord-muted);
+}
+
+.picker-control {
+  height: 30px;
+  overflow: hidden;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  padding: 5px 32px 5px 9px;
+  text-align: left;
+}
+
+.picker-placeholder,
+.picker-tags {
+  margin-right: auto;
+  text-align: left;
+}
+
+.picker-tags:empty {
+  display: none;
+}
+
+select[data-economy-key="bonusRole"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-tag {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+.picker-tag:not(:last-child)::after {
+  content: ", ";
+}
+
+.picker-tag button {
+  display: none;
+}
