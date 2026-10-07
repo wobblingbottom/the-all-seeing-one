@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ChatInputCommandInteraction, ContainerBuilder, EmbedBuilder, GuildMember, LabelBuilder, Message, MessageFlags, ModalBuilder, ModalSubmitInteraction, RepliableInteraction, SeparatorBuilder, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, TextDisplayBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, GuildMember, LabelBuilder, Message, MessageFlags, ModalBuilder, ModalSubmitInteraction, RepliableInteraction, SeparatorBuilder, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, TextDisplayBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } from "discord.js";
 import { db, ensureDefaultEconomySystem, settingsFor } from "./db.js";
 
 type EconomyConfig = Record<string, string | string[] | boolean>;
@@ -98,12 +98,10 @@ function priceCurrencyName(price: ShopPrice) {
 }
 function replyV2(interaction: RepliableInteraction, title: string, body: string, ephemeral = false, separated = true) {
   const container = new ContainerBuilder().setAccentColor(0xf45f77);
-  if (separated) {
-    container
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${title}**`))
-      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(body));
-  } else container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${title}**\n${body}`));
+  container
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${title}**`))
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(body));
   return interaction.reply({
     components: [container],
     allowedMentions: { parse: [] },
@@ -263,7 +261,7 @@ export function economyModal(action: string, userId: string, config: EconomyConf
   return modal;
 }
 
-type EconomyInteraction = ChatInputCommandInteraction | ModalSubmitInteraction | StringSelectMenuInteraction;
+type EconomyInteraction = ChatInputCommandInteraction | ModalSubmitInteraction | StringSelectMenuInteraction | ButtonInteraction;
 
 async function audit(interaction: EconomyInteraction, title: string, text: string, icon = economyEmoji) {
   const id = settingsFor(interaction.guildId!).money_audit_channel_id;
@@ -272,7 +270,7 @@ async function audit(interaction: EconomyInteraction, title: string, text: strin
   if (!channel?.isSendable()) return;
   const container = new ContainerBuilder()
     .setAccentColor(0xf45f77)
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${icon} ${title}`))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${icon} **${title}**`))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(text))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -286,7 +284,7 @@ async function auditPurchase(interaction: EconomyInteraction, item: ShopItem, pa
   if (!channel?.isSendable()) return;
   const container = new ContainerBuilder()
     .setAccentColor(0xf45f77)
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${cartEmoji} Purchase`))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${cartEmoji} **Purchase**`))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${interaction.user.username}** bought ${itemIcon(item.emoji_id, interaction)} **${item.name}** for **${paid}**.`))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -366,8 +364,52 @@ async function rewardCommand(interaction: ChatInputCommandInteraction | ModalSub
   await replyV2(interaction, action === "daily" ? "Daily reward" : "Work complete", `You earned **${money(guildId, credited)}**${action === "daily" ? `\nDaily streak: **${streak}**` : ""}.`);
 }
 
+const shopPageSize = 7;
+function shopPage(interaction: EconomyInteraction, requestedPage = 0, ownerId = interaction.user.id) {
+  const guildId = interaction.guildId!;
+  const now = new Date().toISOString();
+  const filter = "guild_id=? AND listed=1 AND (expires_at IS NULL OR expires_at>?)";
+  const total = (db.prepare(`SELECT COUNT(*) AS total FROM economy_shop_items WHERE ${filter}`).get(guildId, now) as { total: number }).total;
+  const pages = Math.max(1, Math.ceil(total / shopPageSize));
+  const page = Math.max(0, Math.min(pages - 1, Number.isSafeInteger(requestedPage) ? requestedPage : 0));
+  const items = db.prepare(`SELECT id,name,price,description,emoji_id,stock,unlimited_stock FROM economy_shop_items WHERE ${filter} ORDER BY id LIMIT ? OFFSET ?`).all(guildId, now, shopPageSize, page * shopPageSize) as ShopItem[];
+  const title = label(configFor(guildId), "shopName", "Server shop");
+  const container = new ContainerBuilder().setAccentColor(0xf45f77)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${title}**`))
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+  for (const item of items) {
+    const prices = pricesFor(item.id);
+    const display = prices.length ? prices.map((price, index) => `${index ? ` **${price.join_operator}** ` : ""}${price.currency_symbol} ${price.amount.toLocaleString()}`).join("") : money(guildId, item.price);
+    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${itemIcon(item.emoji_id, interaction)} ${item.name}** ? ${display}${item.unlimited_stock || item.stock > 0 ? "" : " *(sold out)*"}\n${item.description || "No description"}`.trim().slice(0, 4000)));
+  }
+  if (!items.length) container.addTextDisplayComponents(new TextDisplayBuilder().setContent("The shop has no listed items."));
+  if (pages > 1) {
+    container.addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`Page ${page + 1} of ${pages}`))
+      .addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId(`economy:shop-page:${ownerId}:${page - 1}`).setLabel("Previous").setStyle(ButtonStyle.Secondary).setDisabled(page === 0),
+        new ButtonBuilder().setCustomId(`economy:shop-page:${ownerId}:${page + 1}`).setLabel("Next").setStyle(ButtonStyle.Secondary).setDisabled(page === pages - 1)
+      ));
+  }
+  return container;
+}
+
 export async function handleEconomyCommand(interaction: EconomyInteraction) {
   if (!interaction.guildId || !interaction.guild) return false;
+  if (interaction.isButton()) {
+    if (!interaction.customId.startsWith("economy:shop-page:")) return false;
+    const [, , ownerId, rawPage] = interaction.customId.split(":");
+    if (ownerId !== interaction.user.id) {
+      await interaction.reply({ content: "Open your own shop to browse its pages.", flags: MessageFlags.Ephemeral });
+      return true;
+    }
+    if (!systemsFor(interaction.guildId).length || !enabled(activeConfig(interaction.guildId), "shopEnabled")) {
+      await interaction.reply({ content: "The shop is unavailable.", flags: MessageFlags.Ephemeral });
+      return true;
+    }
+    await interaction.update({ components: [shopPage(interaction, Number(rawPage), ownerId)], allowedMentions: { parse: [] } });
+    return true;
+  }
   if (interaction.isStringSelectMenu()) {
     if (!interaction.customId.startsWith("economy:buy-price:")) return false;
     const [, , ownerId, rawItemId] = interaction.customId.split(":");
@@ -426,18 +468,13 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
         inline: true
       };
     });
-    const embed = new EmbedBuilder()
-      .setColor(0xf45f77)
-      .setDescription(`${economyEmoji} ${user.username}'s wallet`);
+    const container = new ContainerBuilder().setAccentColor(0xf45f77)
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${user.username}'s wallet**`))
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
     if (wallet.length) {
-      const spacedWallet = [] as typeof wallet;
-      for (let index = 0; index < Math.min(wallet.length, 16); index += 2) {
-        spacedWallet.push(wallet[index], { name: "\u200b", value: "\u200b", inline: true });
-        spacedWallet.push(wallet[index + 1] ?? { name: "\u200b", value: "\u200b", inline: true });
-      }
-      embed.addFields(spacedWallet);
-    } else embed.setDescription("This wallet has no currencies.");
-    await interaction.reply({ embeds: [embed], allowedMentions: { parse: [] } });
+      for (const currency of wallet) container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${currency.name}**\n${currency.value}`));
+    } else container.addTextDisplayComponents(new TextDisplayBuilder().setContent("This wallet has no currencies."));
+    await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } });
   } else if (name === "daily" || name === "work") await rewardCommand(interaction, name);
   else if (name === "deposit" || name === "withdraw") {
     const value = getAccount(guildId, interaction.user.id, interaction.user.username);
@@ -486,12 +523,7 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
     await audit(interaction, "Payment", `**${interaction.user.username}** paid **${recipient.username}** **${money(guildId, amount)}**${fee ? ` with a **${money(guildId, fee)}** fee` : ""}.`, "💸");
   } else if (name === "shop") {
     if (!enabled(config, "shopEnabled")) return void await replyV2(interaction, "Shop unavailable", "The shop is disabled.", true);
-    const items = db.prepare("SELECT id,name,price,description,emoji_id,stock,unlimited_stock FROM economy_shop_items WHERE guild_id=? AND listed=1 AND (expires_at IS NULL OR expires_at>?) ORDER BY id LIMIT 25").all(guildId, new Date().toISOString()) as ShopItem[];
-    await replyV2(interaction, label(sharedConfig, "shopName", "Server shop"), items.length ? items.map(item => {
-      const prices = pricesFor(item.id);
-      const display = prices.length ? prices.map((price, index) => `${index ? ` **${price.join_operator}** ` : ""}${price.currency_symbol} ${price.amount.toLocaleString()}`).join("") : money(guildId, item.price);
-      return `**${itemIcon(item.emoji_id, interaction)} ${item.name}** — ${display}${item.unlimited_stock || item.stock > 0 ? "" : " *(sold out)*"}\n${item.description || "No description"}`.trim();
-    }).join("\n\n").slice(0, 3800) : "The shop has no listed items.");
+    await interaction.reply({ components: [shopPage(interaction)], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } });
   } else if (name === "buy") {
     if (!enabled(config, "shopEnabled")) return void await replyV2(interaction, "Shop unavailable", "The shop is disabled.", true);
     const id = submittedItem;
@@ -524,7 +556,7 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
     const priceSummary = groups.map(group => `- ${group.map(price => `${price.currency_symbol} **${price.amount.toLocaleString()} ${priceCurrencyName(price)}**`).join(" + ")}`).join("\n");
     const container = new ContainerBuilder()
       .setAccentColor(0xf45f77)
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`### ${itemIcon(item.emoji_id, interaction)} ${item.name}`.slice(0, 4000)))
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${itemIcon(item.emoji_id, interaction)} ${item.name}**`.slice(0, 4000)))
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${item.description || "No description"}\n\n**Available prices**\n${priceSummary}\n\nChoose how you want to pay.`.slice(0, 4000)))
       .addActionRowComponents(row);

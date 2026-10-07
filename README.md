@@ -28,6 +28,14 @@ The economy supports message rewards and a single `/economy` command with an act
 6. Invite the bot with the `bot` scope and these permissions: View Channels, Send Messages, Read Message History, and Manage Roles. Put its Discord role above every reward role it should grant.
 7. Open `http://localhost:3000`, sign in with Discord, select your server, and configure leveling.
 
+## Moderation
+
+Use `/mod` and select an action, then fill in its form: `/mod - Warn member`, `/mod - Modlogs`, `/mod - Clear case`, `/mod - Timeout member`, `/mod - Remove timeout`, `/mod - Kick member`, `/mod - Ban member`, `/mod - Unban user`, and `/mod - Purge messages`. Warnings and completed actions are saved as moderation cases; clearing warnings preserves their history.
+
+Use the Moderation dashboard to enable or disable commands, choose an optional log channel, and view the latest 50 cases. Moderators need Moderate Members for warnings and timeouts, Kick Members for kicks, Ban Members for bans and unbans, or Manage Messages for purge. The bot needs matching permissions for Discord actions, and its role must be above the member being moderated. Purge also needs View Channel and Read Message History in the current channel. Timeouts accept 1-40,320 minutes; purge accepts 1-100 messages and skips messages older than 14 days. Command replies are private to the moderator. Member actions send a direct message with the reason and optional message links. Completed actions are posted to the configured moderation log channel. Forms accept one optional Discord message link from the same server, saved with the case and shown in dashboard history. Failed DM or log delivery is reported to the moderator without undoing the action.
+
+Moderation settings and warning streak rules save automatically after changes. Invalid rules show a validation message and are not saved. Warning streak rules are configured in Moderation settings. Assign an exact active-warning count to a timeout (with duration), kick, or ban. For example, configure warning 2 to kick and warning 3 to ban. No rules are enabled by default. Counts survive leaving and rejoining; clearing warnings resets the active count. Automatic punishments use the bot?s permissions and still respect the issuing moderator?s role hierarchy. A failed punishment leaves the warning recorded and reports the failure only in the moderator response and log.
+
 ## Level curve
 
 Level `n` requires `n² × 100` total XP. By default, a qualifying message earns 15–25 XP, at most once every 60 seconds. Bot messages are ignored.

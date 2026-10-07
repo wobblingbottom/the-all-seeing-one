@@ -4,6 +4,8 @@ import { db, ensureDefaultSystem, levelFromXp, xpForLevel } from "./db.js";
 import { renderLevelCard } from "./level-card.js";
 import { economyCommands, handleEconomyCommand, rewardEconomyMessage } from "./economy.js";
 
+import { moderationCommands, handleModerationCommand } from "./moderation.js";
+
 export const bot = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers]
 });
@@ -149,11 +151,16 @@ bot.on(Events.InteractionCreate, async interaction => {
     return;
   }
   if (interaction.isModalSubmit()) {
+    if (await handleModerationCommand(interaction)) return;
     await handleEconomyCommand(interaction);
     return;
   }
-  if (interaction.isStringSelectMenu() && await handleEconomyCommand(interaction)) return;
+  if (interaction.isStringSelectMenu() || interaction.isButton()) {
+    if (await handleModerationCommand(interaction)) return;
+    if (await handleEconomyCommand(interaction)) return;
+  }
   if (!interaction.isChatInputCommand() || !interaction.guild) return;
+  if (await handleModerationCommand(interaction)) return;
   if (await handleEconomyCommand(interaction)) return;
   if (interaction.commandName !== "level") return;
   await interaction.deferReply();
@@ -205,7 +212,7 @@ bot.on(Events.InteractionCreate, async interaction => {
 });
 
 bot.once(Events.ClientReady, async client => {
-  await client.application.commands.set([levelCommand.toJSON(), ...economyCommands.map(command => command.toJSON())]);
+  await client.application.commands.set([levelCommand.toJSON(), ...economyCommands.map(command => command.toJSON()), ...moderationCommands.map(command => command.toJSON())]);
   console.log(`Discord bot ready as ${client.user.tag}`);
 });
 export const startBot = () => bot.login(config.token);

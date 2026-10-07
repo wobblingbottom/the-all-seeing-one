@@ -1,0 +1,125 @@
+﻿const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const { DatabaseSync } = require('node:sqlite');
+const ts = require('typescript');
+const discord = require('discord.js');
+const source = ts.transpileModule(fs.readFileSync('src/moderation.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+function setup() {
+  const db = new DatabaseSync(':memory:');
+  const context = { exports: {}, require: name => name === 'discord.js' ? discord : { db }, URL, console: { error() {} } };
+  vm.createContext(context); vm.runInContext(source, context);
+  const events = [], responses = [];
+  let actorAllowed = true, botAllowed = true, dmFails = false, targetError = null, higherRole = false;
+  const user = { id: '222222222222222222', username: 'Member', send: async payload => { if (dmFails) throw Error('Closed DM'); events.push(['dm', payload]); } };
+  const actor = { id: '111111111111111111', user: { username: 'Moderator' }, permissions: { has: () => actorAllowed }, roles: { highest: { comparePositionTo: () => higherRole ? -1 : 1 } } };
+  const target = { roles: { highest: {} }, moderatable: true, kickable: true, bannable: true, timeout: async value => events.push(['timeout', value]), kick: async () => events.push(['kick']) };
+  const me = { id: '333333333333333333', permissions: { has: () => botAllowed }, roles: { highest: { comparePositionTo: () => 1 } } };
+  const guild = { id: '444444444444444444', name: 'Server', ownerId: '555555555555555555', members: { fetch: async id => { if (id === actor.id) return actor; if (targetError) throw targetError; return target; }, fetchMe: async () => me, ban: async () => events.push(['ban']) }, bans: { remove: async () => events.push(['unban']) }, channels: { fetch: async () => ({ isSendable: () => true, send: async payload => events.push(['log', payload]) }) } };
+  function interaction(action, fields = {}, type = 'modal') {
+    return { commandName: 'mod', customId: `moderation:${action}:${actor.id}`, guild, guildId: guild.id, user: { id: actor.id, tag: 'Moderator' }, memberPermissions: actor.permissions, deferred: false,
+      isButton: () => type === 'button', isStringSelectMenu: () => type === 'select', isModalSubmit: () => type === 'modal',
+      options: { getString: () => action }, fields: { getSelectedUsers: () => ({ first: () => user }), getTextInputValue: name => fields[name] ?? (name === 'reason' ? 'Rule violation' : '') },
+      client: { users: { fetch: async id => id === user.id ? user : { username: 'Moderator' } } },
+      deferReply: async function () { this.deferred = true; }, deferUpdate: async function () { this.deferred = true; events.push(['defer']); },
+      reply: async payload => responses.push(payload), editReply: async payload => responses.push(payload), showModal: async modal => events.push(['modal', modal.toJSON()]),
+      channelId: 'channel', channel: { permissionsFor: () => ({ has: () => true }), bulkDelete: async amount => { events.push(['purge', amount]); return { size: amount }; } }
+    };
+  }
+  context.exports.moderationSettings(guild.id);
+  return { db, api: context.exports, events, responses, interaction, actor, user, guild, setActor: v => actorAllowed = v, setBot: v => botAllowed = v, failDM: () => dmFails = true, targetError: v => targetError = v, higherRole: () => higherRole = true };
+}
+const content = payload => payload.components ? payload.components.flatMap(c => c.toJSON().components.filter(v => v.type === 10).map(v => v.content)).join('\n') : payload.embeds.map(e => e.toJSON().description).join('\n');
+test('warn -> escalation -> clear one -> separate histories; no errors leak into DMs', async () => {
+  const h = setup();
+  h.db.prepare('UPDATE moderation_settings SET log_channel_id=?,warning_rules=?').run('log', JSON.stringify([{ warnings: 2, action: 'kick' }, { warnings: 3, action: 'ban' }]));
+  await h.api.handleModerationCommand(h.interaction('warn'));
+  await h.api.handleModerationCommand(h.interaction('warn'));
+  assert.equal(h.events.filter(e => e[0] === 'kick').length, 1);
+  h.setBot(false);
+  await h.api.handleModerationCommand(h.interaction('warn'));
+  const lastDM = h.events.filter(e => e[0] === 'dm').at(-1)[1];
+  assert(!content(lastDM).includes('failed'));
+  assert(content(h.events.filter(e => e[0] === 'log').at(-1)[1]).includes('Bot lacks'));
+  assert.equal(h.db.prepare("SELECT COUNT(*) n FROM moderation_cases WHERE action='warn' AND cleared=0").get().n, 3);
+  await h.api.handleModerationCommand(h.interaction('clearwarnings', { 'case-number': '1' }));
+  assert.equal(content(h.events.filter(e => e[0] === 'dm').at(-1)[1]), "Warning 'Rule violation' has been cleared from you");
+  assert.equal(h.db.prepare("SELECT COUNT(*) n FROM moderation_cases WHERE action='warn' AND cleared=0").get().n, 2);
+  await h.api.handleModerationCommand(h.interaction('warnings'));
+  assert(content(h.responses.at(-1)).startsWith('**Modlogs'));
+  assert(!content(h.responses.at(-1)).includes('Case 1 - Warn'));
+  assert(content(h.responses.at(-1)).includes('Kick'));
+  const cleared = h.interaction('warnings', {}, 'button'); cleared.customId = `mod-tools:cleared:${h.actor.id}:${h.user.id}`;
+  await h.api.handleModerationCommand(cleared);
+  assert(content(h.responses.at(-1)).includes('Case 1 - Warn (cleared)'));
+  assert(!content(h.responses.at(-1)).includes('~~'));
+  assert(h.responses.at(-1).components[0].toJSON().components.at(-1).components.every(b => b.style === 2));
+  h.db.close();
+});
+test('all direct punishments, reversals, purge, form validation, and protected clear records', async () => {
+  const h = setup();
+  for (const action of ['timeout', 'untimeout', 'kick', 'ban', 'unban', 'purge']) await h.api.handleModerationCommand(h.interaction(action, { minutes: '10', amount: '5', 'user-id': h.user.id }));
+  assert(h.events.some(e => e[0] === 'timeout' && e[1] === 600000));
+  assert(h.events.some(e => e[0] === 'timeout' && e[1] === null));
+  assert(h.events.some(e => e[0] === 'unban'));
+  assert(h.events.some(e => e[0] === 'purge' && e[1] === 5));
+  for (const action of ['unban', 'untimeout']) {
+    const row = h.db.prepare('SELECT id FROM moderation_cases WHERE action=?').get(action);
+    await h.api.handleModerationCommand(h.interaction('clearwarnings', { 'case-number': String(row.id) }));
+    assert(content(h.responses.at(-1)).includes('cannot be cleared'));
+  }
+  const before = h.db.prepare('SELECT COUNT(*) n FROM moderation_cases').get().n;
+  await h.api.handleModerationCommand(h.interaction('timeout', { minutes: '40321' }));
+  await h.api.handleModerationCommand(h.interaction('purge', { amount: '101' }));
+  assert.equal(h.db.prepare('SELECT COUNT(*) n FROM moderation_cases').get().n, before);
+  for (const action of ['warn','warnings','clearwarnings','timeout','untimeout','kick','ban','unban','purge']) assert(h.api.moderationModal(action,h.actor.id).toJSON().components.length <= 5);
+  assert.throws(() => h.api.validateWarningRules([{ warnings: 2, action: 'ban' }, { warnings: 2, action: 'kick' }]));
+  h.db.close();
+});
+test('permission, role, lookup failure, closed DM, and interaction ownership protections', async () => {
+  const h = setup(); h.setActor(false);
+  await h.api.handleModerationCommand(h.interaction('warn')); assert.equal(h.events.length, 0);
+  h.setActor(true); h.higherRole(); await h.api.handleModerationCommand(h.interaction('kick')); assert(!h.events.some(e => e[0] === 'kick'));
+  const h2 = setup(); h2.targetError(Object.assign(Error('Forbidden'), { code: 50013 }));
+  await h2.api.handleModerationCommand(h2.interaction('ban')); assert(!h2.events.some(e => e[0] === 'ban'));
+  h2.targetError(null); h2.failDM(); await h2.api.handleModerationCommand(h2.interaction('warn'));
+  assert.equal(h2.db.prepare("SELECT COUNT(*) n FROM moderation_cases WHERE action='warn'").get().n, 1);
+  assert(content(h2.responses.at(-1)).includes('DM could not'));
+  const click = h2.interaction('warn', {}, 'button'); click.customId = `mod-tools:logs:other:${h2.user.id}`;
+  await h2.api.handleModerationCommand(click); assert(content(h2.responses.at(-1)).includes('own /mod'));
+  h.db.close(); h2.db.close();
+});
+
+test('pagination acknowledgements, empty history, and modal opening without member lookup', async () => {
+  const h = setup();
+  h.targetError(Error('Slow member lookup'));
+  await h.api.handleModerationCommand(h.interaction('timeout', {}, 'command'));
+  assert(h.events.some(e => e[0] === 'modal'));
+  h.targetError(null);
+  const insert = h.db.prepare('INSERT INTO moderation_cases (guild_id,user_id,moderator_id,action,reason,created_at) VALUES (?,?,?,?,?,?)');
+  for (let n = 0; n < 9; n++) insert.run(h.guild.id,h.user.id,h.actor.id,'warn','Reason '+n,'2026-10-07T12:00:00Z');
+  const click = h.interaction('warnings', {}, 'button');
+  click.customId = 'mod-tools:logs-page:'+h.actor.id+':'+h.user.id+':999';
+  await h.api.handleModerationCommand(click);
+  assert(h.events.some(e => e[0] === 'defer'));
+  const last = h.responses.at(-1).components[0].toJSON();
+  assert(content(h.responses.at(-1)).includes('Page 3/3'));
+  assert.equal(last.components.at(-1).components[1].disabled,true);
+  h.db.exec('DELETE FROM moderation_cases');
+  await h.api.handleModerationCommand(h.interaction('warnings'));
+  assert(!content(h.responses.at(-1)).includes('Page '));
+  h.db.close();
+});
+
+test('configured admin and moderator roles grant only their intended actions', async () => {
+  const h=setup();h.setActor(false);
+  h.db.prepare('UPDATE moderation_settings SET admin_role_id=?,moderator_role_id=?').run('admin-role','mod-role');
+  const moderator=h.interaction('warn',{},'command');moderator.member={roles:['mod-role']};
+  await h.api.handleModerationCommand(moderator);assert(h.events.some(e=>e[0]==='modal'));
+  const ban=h.interaction('ban',{},'command');ban.member={roles:['mod-role']};
+  await h.api.handleModerationCommand(ban);assert(content(h.responses.at(-1)).includes('permission'));
+  const admin=h.interaction('ban',{},'command');admin.member={roles:['admin-role']};
+  const before=h.events.length;await h.api.handleModerationCommand(admin);assert.equal(h.events.length,before+1);assert.equal(h.events.at(-1)[0],'modal');
+  h.db.close();
+});

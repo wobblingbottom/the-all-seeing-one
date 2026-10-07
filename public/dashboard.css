@@ -2072,3 +2072,7 @@ select[data-economy-key="bonusRole"] {
 .picker-tag button {
   display: none;
 }
+
+.moderation-case{padding:18px 0;border-bottom:1px solid var(--discord-border)}.moderation-case:last-child{border-bottom:0}.moderation-case>div{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.moderation-case small,.moderation-case p{color:var(--discord-muted)}.moderation-case p{margin:8px 0 0;overflow-wrap:anywhere}
+
+.warning-escalation{margin-top:24px;padding-top:20px;border-top:1px solid var(--discord-border)}.warning-escalation p{color:var(--discord-muted);line-height:1.6}.warning-rule-row{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:16px}.warning-rule-row label{flex:1;min-width:130px}.warning-rule-row input,.warning-rule-row select{width:100%}.warning-rule-remove{margin-bottom:0}#add-warning-rule{margin-top:8px}

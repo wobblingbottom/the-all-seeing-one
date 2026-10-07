@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --disable-warning=ExperimentalWarning --watch --import tsx src/index.ts",
     "start": "node --disable-warning=ExperimentalWarning --import tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:moderation": "node --disable-warning=ExperimentalWarning --test tests/moderation.test.cjs"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",

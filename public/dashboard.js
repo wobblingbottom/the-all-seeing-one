@@ -16,8 +16,8 @@ const emojiCategoryIcons={people:'😀',nature:'🌿',foods:'🍕',activity:'⚽
 const excludedUnicodeEmojiIds=new Set(['rightwards_hand','leftwards_hand','palm_down_hand','palm_up_hand']);
 const availableCurrencyEmojis=()=>[...globalEmojis,...(state.data?.emojis||[])];
 async function request(url, options) {const economySave=options?.method==='PUT'&&/\/economy$/.test(url)&&options.body&&state.economySystemId;if(economySave){const body=JSON.parse(options.body);body.systemId=state.economySystemId;options={...options,body:JSON.stringify(body)}} const response = await fetch(url, options); if (response.status === 401) location.href = '/auth/discord'; if (response.status === 204) return null; const json = await response.json(); if (!response.ok) throw new Error(json.error);if(economySave){const system=state.data?.economySystems?.find(entry=>entry.id===state.economySystemId);if(system)Object.assign(system,{currency_symbol:json.currencySymbol,starting_balance:json.startingBalance,max_cash_balance:json.maxCashBalance,max_bank_balance:json.maxBankBalance,config:json.config})} return json; }
-async function boot() { try { const [me,guilds,meta,emojiData]=await Promise.all([request('/api/me'),request('/api/guilds'),request('/api/meta'),request('/assets/emoji-data.json')]); unicodeEmojiGroups=Object.fromEntries(emojiData.categories.map(category=>[category.id,category.emojis.filter(id=>!excludedUnicodeEmojiIds.has(id)).map(id=>emojiData.emojis[id]).filter(Boolean).map(item=>({emoji:item.skins[0].native,unified:item.skins[0].unified.toLowerCase(),name:item.name,keywords:item.keywords||[]}))]));renderEmojiCategoryNav(); $('#username').textContent=me.username; $('#avatar').textContent=me.username[0].toUpperCase(); if(me.avatar) $('#avatar').style.backgroundImage=`url(https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png)`; const installed=guilds.filter(g=>g.installed); $('#guild').innerHTML=installed.map(g=>`<option value="${g.id}">${escapeHtml(g.name)}</option>`).join(''); if(!installed.length){$('#loading').innerHTML=`No manageable server has this bot installed yet.<br><a class="button" href="https://discord.com/oauth2/authorize?client_id=${encodeURIComponent(meta.clientId)}&permissions=268504064&scope=bot">Add it to a server</a>`;return} $('#guild').onchange=async()=>{const id=$('#guild').value;await flushSave();await loadGuild(id)}; await loadGuild(installed[0].id); } catch(error){$('#loading').textContent=error.message} }
-async function loadGuild(id,preferredId){ $('#loading').classList.remove('hidden'); document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden')); state.guildId=id; state.data=await request(`/api/guilds/${id}/settings`); state.systemId=preferredId&&state.data.systems.some(s=>s.id===preferredId)?preferredId:state.data.systems[0].id; $('#member-count').textContent=state.data.memberCount.toLocaleString(); const options=state.data.channels.map(c=>`<option value="${c.id}"># ${escapeHtml(c.name)}</option>`).join(''); const roleOptions=state.data.roles.map(r=>`<option value="${r.id}">@ ${escapeHtml(r.name)}</option>`).join(''); $('#channel').innerHTML='<option value="">Select a channel</option>'+options; $('#allowed-channels').innerHTML=options; $('#denied-channels').innerHTML=options; $('#allowed-roles').innerHTML=roleOptions; $('#denied-roles').innerHTML=roleOptions; renderSystemSelect(); await selectSystem(state.systemId); $('#loading').classList.add('hidden'); $('#level-tabs').classList.remove('hidden'); $('#system-toolbar').classList.remove('hidden'); showTab(document.querySelector('.level-tab.active').dataset.tab); }
+async function boot() { try { const [me,guilds,meta,emojiData]=await Promise.all([request('/api/me'),request('/api/guilds'),request('/api/meta'),request('/assets/emoji-data.json')]); unicodeEmojiGroups=Object.fromEntries(emojiData.categories.map(category=>[category.id,category.emojis.filter(id=>!excludedUnicodeEmojiIds.has(id)).map(id=>emojiData.emojis[id]).filter(Boolean).map(item=>({emoji:item.skins[0].native,unified:item.skins[0].unified.toLowerCase(),name:item.name,keywords:item.keywords||[]}))]));renderEmojiCategoryNav(); $('#username').textContent=me.username; $('#avatar').textContent=me.username[0].toUpperCase(); if(me.avatar) $('#avatar').style.backgroundImage=`url(https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png)`; const installed=guilds.filter(g=>g.installed); $('#guild').innerHTML=installed.map(g=>`<option value="${g.id}">${escapeHtml(g.name)}</option>`).join(''); if(!installed.length){$('#loading').innerHTML=`No manageable server has this bot installed yet.<br><a class="button" href="https://discord.com/oauth2/authorize?client_id=${encodeURIComponent(meta.clientId)}&permissions=268504064&scope=bot">Add it to a server</a>`;return} $('#guild').onchange=async()=>{const id=$('#guild').value;await flushSave();await flushModerationSave();await loadGuild(id)}; await loadGuild(installed[0].id); } catch(error){$('#loading').textContent=error.message} }
+async function loadGuild(id,preferredId){ $('#loading').classList.remove('hidden'); document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden')); state.guildId=id; state.data=await request(`/api/guilds/${id}/settings`); state.systemId=preferredId&&state.data.systems.some(s=>s.id===preferredId)?preferredId:state.data.systems[0].id; $('#member-count').textContent=state.data.memberCount.toLocaleString(); const options=state.data.channels.map(c=>`<option value="${c.id}"># ${escapeHtml(c.name)}</option>`).join(''); const roleOptions=state.data.roles.map(r=>`<option value="${r.id}">@ ${escapeHtml(r.name)}</option>`).join(''); $('#channel').innerHTML='<option value="">Select a channel</option>'+options; $('#allowed-channels').innerHTML=options; $('#denied-channels').innerHTML=options; $('#allowed-roles').innerHTML=roleOptions; $('#denied-roles').innerHTML=roleOptions; renderSystemSelect(); await selectSystem(state.systemId); $('#loading').classList.add('hidden'); $('#level-tabs').classList.remove('hidden'); $('#system-toolbar').classList.remove('hidden'); showSection(document.querySelector('.tab.active')?.dataset.section||'levels');$('#economy-system-toolbar')?.classList.toggle('hidden',document.querySelector('.tab.active')?.dataset.section!=='economy'); }
 function renderSystemSelect(){ $('#system-select').innerHTML=state.data.systems.map(s=>`<option value="${s.id}" ${s.id===state.systemId?'selected':''}>${escapeHtml(s.name)}</option>`).join(''); $('#modal-delete-system').disabled=state.data.systems.length===1;$('#new-system').disabled=state.data.systems.length>=10;$('#new-system').title=$('#new-system').disabled?'Maximum of 10 leveling systems reached':''; }
 function renderEconomy(){const economy=state.data.economy||{},savedSymbol=economy.currencySymbol||'',emojiMatch=savedSymbol.match(/^<a?:[^:]+:(\d+)>$/),emoji=emojiMatch&&availableCurrencyEmojis().find(e=>e.id===emojiMatch[1]),selected=emoji||(!savedSymbol?globalEmojis[1]:null),symbol=selected?`<${selected.animated?'a':''}:${selected.name}:${selected.id}>`:savedSymbol;$('#currency-symbol').value=symbol;$('#currency-symbol').dataset.emojiId=selected?.id||'';$('#starting-balance').value=String(economy.startingBalance??0);$('#max-cash-balance').value=String(economy.maxCashBalance??1000000);$('#max-bank-balance').value=String(economy.maxBankBalance??1000000);$('#money-audit-channel').innerHTML='<option value="">Disabled</option>'+state.data.channels.map(c=>`<option value="${c.id}"># ${escapeHtml(c.name)}</option>`).join('');$('#money-audit-channel').value=economy.moneyAuditChannelId||'';document.querySelectorAll('[data-options]').forEach(select=>{const items=select.dataset.options==='roles'?state.data.roles:state.data.channels,prefix=select.dataset.options==='roles'?'@ ':'# ',first=select.options[0]?.outerHTML||'';select.innerHTML=first+items.map(item=>`<option value="${item.id}">${prefix}${escapeHtml(item.name)}</option>`).join('')});document.querySelectorAll('[data-economy-key]').forEach(field=>{const value=economy.config?.[field.dataset.economyKey];if(value!==undefined)field.value=String(value)});$('#emoji-search').value='';renderEmojiGrid();updateCurrencyPreview()}
 function showEconomyPage(name){document.querySelectorAll('.economy-page').forEach(page=>page.classList.toggle('hidden',page.dataset.economyPage!==name));document.querySelectorAll('.economy-child').forEach(button=>button.classList.toggle('active',button.dataset.economyPage===name));const active=[...document.querySelectorAll('.economy-child')].find(button=>button.dataset.economyPage===name);$('#title').textContent=active?.textContent||'Economy';$('#crumb').textContent='DASHBOARD / ECONOMY / '+(active?.textContent||name).toUpperCase();if(name==='general')loadEconomyLeaderboard(1)}
@@ -44,7 +44,19 @@ function syncRewardRoleTint(select){const role=state.data.roles.find(item=>item.
 function renderRewards(items){$('#reward-list').innerHTML=items.map(r=>rewardRow(r.level,r.role_id)).join('');document.querySelectorAll('.reward-role').forEach(syncRewardRoleTint);$('#no-rewards').classList.toggle('hidden',items.length>0)}
 function rewardRow(level=10,roleId=''){const options=state.data.roles.map(r=>`<option value="${r.id}" data-role-color="${roleTint(r)}" ${r.id===roleId?'selected':''}>@ ${escapeHtml(r.name)}</option>`).join('');return `<div class="reward-row"><input class="reward-level" type="number" min="1" value="${level}" aria-label="Level"><span class="arrow">→</span><select class="reward-role" aria-label="Discord role"><option value="">Select a role</option>${options}</select><button class="remove" title="Remove">×</button></div>`}
 function showTab(name){document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));document.querySelectorAll('.level-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('#'+name).classList.remove('hidden');$('#title').textContent=name==='overview'?'Levels overview':name==='leveling'?'Leveling settings':'Role rewards';$('#crumb').textContent='DASHBOARD / LEVELS / '+name.toUpperCase()}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');const economy=b.dataset.section==='economy';$('#level-tabs').classList.toggle('hidden',economy);$('#economy-tabs').classList.toggle('hidden',!economy);$('#system-toolbar').classList.toggle('hidden',economy);if(economy){document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));renderEconomy();renderEconomyRules();renderShopItems();$('#economy').classList.remove('hidden');showEconomyPage(document.querySelector('.economy-child.active')?.dataset.economyPage||'general')}else showTab(document.querySelector('#level-tabs .level-tab.active').dataset.tab)});
+function showSection(section){
+  if(section!=='moderation')flushModerationSave();
+  const economy=section==='economy',levels=section==='levels';
+  document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.section===section));
+  $('#level-tabs').classList.toggle('hidden',!levels);
+  $('#economy-tabs').classList.toggle('hidden',!economy);
+  $('#system-toolbar').classList.toggle('hidden',!levels);
+  document.querySelectorAll('.panel').forEach(panel=>panel.classList.add('hidden'));
+  if(economy){renderEconomy();renderEconomyRules();renderShopItems();$('#economy').classList.remove('hidden');showEconomyPage(document.querySelector('.economy-child.active')?.dataset.economyPage||'general')}
+  else if(levels)showTab(document.querySelector('#level-tabs .level-tab.active')?.dataset.tab||'overview');
+  else if(section==='moderation'){$('#moderation').classList.remove('hidden');$('#title').textContent='Moderation';$('#crumb').textContent='DASHBOARD / MODERATION';loadModeration()}
+}
+document.querySelectorAll('.tab').forEach(button=>button.onclick=()=>showSection(button.dataset.section));
 document.querySelectorAll('.level-tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 document.querySelectorAll('.economy-child').forEach(button=>button.onclick=()=>showEconomyPage(button.dataset.economyPage));
 $('#currency-symbol').oninput=()=>{$('#currency-symbol').dataset.emojiId='';updateCurrencyPreview()};
@@ -579,4 +591,94 @@ function closeEconomyIssues(){$('#economy-issues-modal').classList.add('hidden')
 $('#economy-issues').onclick=()=>{renderEconomyIssues();$('#economy-issues-modal').classList.remove('hidden')};$('#close-economy-issues').onclick=closeEconomyIssues;$('#economy-issues-modal .modal-backdrop').onclick=closeEconomyIssues;
 $('#view-affected-shop-items').onclick=()=>{closeEconomyIssues();showEconomyPage('shop')};
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{const economy=tab.dataset.section==='economy';economyToolbar.classList.toggle('hidden',!economy);if(economy){renderEconomySystemSelect();switchEconomySystem(state.economySystemId||state.data.economySystems?.[0]?.id);renderEconomyIssues()}}));
+
+let moderationRequestId=0;
+let moderationLoadedGuild=null;
+let moderationSaveTimer;
+let moderationPendingSave=null;
+let moderationSaveQueue=Promise.resolve();
+let moderationEditVersion=0;
+function scheduleModerationSave(){
+  if(moderationLoadedGuild!==state.guildId)return;
+  clearTimeout(moderationSaveTimer);moderationSaveTimer=null;
+  const version=++moderationEditVersion;
+  try{
+    moderationPendingSave={guildId:state.guildId,version,body:{enabled:$('#moderation-enabled').checked,logChannelId:$('#moderation-log-channel').value,adminRoleId:$('#moderation-admin-role').value,moderatorRoleId:$('#moderation-moderator-role').value,warningRules:collectWarningRules()}};
+    moderationSaveTimer=setTimeout(flushModerationSave,650);
+  }catch(error){moderationPendingSave=null;showSaveToast(error.message,true)}
+}
+function flushModerationSave(){
+  clearTimeout(moderationSaveTimer);moderationSaveTimer=null;
+  const pending=moderationPendingSave;moderationPendingSave=null;
+  if(pending)moderationSaveQueue=moderationSaveQueue.then(async()=>{
+    try{
+      await request(`/api/guilds/${pending.guildId}/moderation`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(pending.body)});
+      if(state.guildId===pending.guildId&&moderationEditVersion===pending.version)showSaveToast('Moderation saved');
+    }catch(error){if(state.guildId===pending.guildId&&moderationEditVersion===pending.version)showSaveToast(error.message,true)}
+  });
+  return moderationSaveQueue;
+}
+function moderationMessageLinks(entry){
+  let links=[];try{links=JSON.parse(entry.message_links||'[]')}catch{}
+  if(!Array.isArray(links))return '';
+  return links.filter(link=>typeof link==='string'&&/^https:\/\/(?:discord(?:app)?\.com|canary\.discord\.com|ptb\.discord\.com)\/channels\/\d+\/\d+\/\d+(?:[?#].*)?$/.test(link)).map((link,index)=>`<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Message ${index+1}</a>`).join(' - ');
+}
+function syncWarningRules(){
+  $('#warning-rules-empty').classList.toggle('hidden',!!$('#warning-rules').children.length);
+  $('#add-warning-rule').disabled=$('#warning-rules').children.length>=20;
+}
+function addWarningRule(rule={}){
+  if($('#warning-rules').children.length>=20)return;
+  const used=[...document.querySelectorAll('.warning-rule-count')].map(input=>Number(input.value));
+  const count=rule.warnings||Math.max(1,...used)+1;
+  const row=document.createElement('div');row.className='warning-rule-row';
+  row.innerHTML='<label>Warning number<input class="warning-rule-count" type="number" min="1" max="100" required></label><label>Punishment<select class="warning-rule-action"><option value="timeout">Timeout</option><option value="kick">Kick</option><option value="ban">Ban</option></select></label><label class="warning-rule-duration">Minutes<input class="warning-rule-minutes" type="number" min="1" max="40320" value="60"></label><button type="button" class="outline warning-rule-remove" aria-label="Remove punishment">Remove</button>';
+  row.querySelector('.warning-rule-count').value=count;row.querySelector('.warning-rule-action').value=rule.action||'kick';row.querySelector('.warning-rule-minutes').value=rule.minutes||60;
+  const sync=()=>row.querySelector('.warning-rule-duration').classList.toggle('hidden',row.querySelector('.warning-rule-action').value!=='timeout');
+  row.querySelector('.warning-rule-action').onchange=sync;row.querySelector('.warning-rule-remove').onclick=()=>{row.remove();syncWarningRules();scheduleModerationSave()};sync();$('#warning-rules').append(row);syncWarningRules();
+}
+function collectWarningRules(){
+  const seen=new Set();
+  return [...document.querySelectorAll('.warning-rule-row')].map(row=>{
+    const warnings=Number(row.querySelector('.warning-rule-count').value),action=row.querySelector('.warning-rule-action').value,minutes=Number(row.querySelector('.warning-rule-minutes').value);
+    if(!Number.isInteger(warnings)||warnings<1||warnings>100||seen.has(warnings))throw new Error('Use unique warning numbers between 1 and 100.');
+    if(action==='timeout'&&(!Number.isInteger(minutes)||minutes<1||minutes>40320))throw new Error('Timeout duration must be 1-40,320 whole minutes.');
+    seen.add(warnings);return {warnings,action,...(action==='timeout'?{minutes}:{})};
+  });
+}
+$('#add-warning-rule').onclick=()=>{addWarningRule();scheduleModerationSave()};
+$('#moderation-enabled').onchange=scheduleModerationSave;
+$('#moderation-log-channel').onchange=scheduleModerationSave;
+$('#moderation-admin-role').onchange=scheduleModerationSave;
+$('#moderation-moderator-role').onchange=scheduleModerationSave;
+$('#warning-rules').addEventListener('input',scheduleModerationSave);
+$('#warning-rules').addEventListener('change',scheduleModerationSave);
+function renderModeration(data){
+  for(const [selector,key] of [['#moderation-admin-role','admin_role_id'],['#moderation-moderator-role','moderator_role_id']]){
+    const select=$(selector);select.innerHTML='<option value="">Not set</option>'+state.data.roles.map(role=>`<option value="${role.id}">@ ${escapeHtml(role.name)}</option>`).join('');select.value=data.settings[key]||'';
+  }
+  $('#moderation-enabled').checked=!!data.settings.enabled;
+  $('#warning-rules').innerHTML='';let rules=[];try{rules=JSON.parse(data.settings.warning_rules||'[]')}catch{};rules.forEach(addWarningRule);syncWarningRules();
+  $('#moderation-log-channel').innerHTML='<option value="">Disabled</option>'+state.data.channels.map(channel=>`<option value="${channel.id}"># ${escapeHtml(channel.name)}</option>`).join('');
+  $('#moderation-log-channel').value=data.settings.log_channel_id||'';
+  $('#moderation-cases').innerHTML=data.cases.length?data.cases.map(entry=>`<article class="moderation-case"><div><b>#${entry.id} - ${escapeHtml(entry.action)}${entry.cleared?' - Cleared':''}</b><small>${escapeHtml(new Date(entry.created_at).toLocaleString())}</small></div><p>Member: ${escapeHtml(entry.user_id||'N/A')} - Moderator: ${escapeHtml(entry.moderator_id)}</p><p>${escapeHtml(entry.reason)}</p>${moderationMessageLinks(entry)?`<p>${moderationMessageLinks(entry)}</p>`:''}</article>`).join(''):'<div class="empty compact">No moderation cases yet.</div>';
+}
+async function loadModeration(){
+  if(!state.guildId||!state.data)return;
+  const guildId=state.guildId,requestId=++moderationRequestId;
+  moderationLoadedGuild=null;
+  const controls=()=>document.querySelectorAll('#moderation input,#moderation select,#moderation .warning-rule-remove,#add-warning-rule');
+  controls().forEach(control=>control.disabled=true);
+  await flushModerationSave();
+  if(guildId!==state.guildId||requestId!==moderationRequestId)return;
+  try{
+    const data=await request(`/api/guilds/${guildId}/moderation`);
+    if(guildId!==state.guildId||requestId!==moderationRequestId)return;
+    renderModeration(data);moderationLoadedGuild=guildId;
+    controls().forEach(control=>control.disabled=false);syncWarningRules();
+  }catch(error){if(guildId===state.guildId&&requestId===moderationRequestId)showSaveToast(error.message,true)}
+  finally{if(guildId===state.guildId&&requestId===moderationRequestId){controls().forEach(control=>control.disabled=false);syncWarningRules()}}
+}
+$('#refresh-moderation').onclick=loadModeration;
+
 boot();

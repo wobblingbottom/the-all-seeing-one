@@ -9,6 +9,8 @@ import { config } from "./config.js";
 import { db, ensureDefaultEconomySystem, ensureDefaultSystem, settingsFor, xpForLevel } from "./db.js";
 import "./types.js";
 
+import { moderationSettings, moderationCases, validateWarningRules } from "./moderation.js";
+
 const app = express();
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
@@ -96,6 +98,37 @@ function canManage(req: Request, res: Response, next: NextFunction) {
     next();
   }).catch(next);
 }
+
+app.get("/api/guilds/:guildId/moderation", requireUser, canManage, (req, res) => {
+  const guildId = String(req.params.guildId);
+  res.json({ settings: moderationSettings(guildId), cases: moderationCases(guildId) });
+});
+app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, res, next) => {
+  try {
+    const guild = bot.guilds.cache.get(String(req.params.guildId))!;
+    const channelId = String(req.body.logChannelId || "");
+    const current = moderationSettings(guild.id);
+    const adminRoleId = String(req.body.adminRoleId ?? current.admin_role_id ?? "");
+    const moderatorRoleId = String(req.body.moderatorRoleId ?? current.moderator_role_id ?? "");
+    for (const id of [adminRoleId, moderatorRoleId]) {
+      if (!id) continue;
+      const role = guild.roles.cache.get(id);
+      if (!role || role.id === guild.id || role.managed) return res.status(400).json({ error: "Choose an available server role" });
+    }
+    let rules;
+    try { rules = validateWarningRules(req.body.warningRules ?? JSON.parse(moderationSettings(guild.id).warning_rules || "[]")); }
+    catch (error) { return res.status(400).json({ error: error instanceof Error ? error.message : "Invalid warning rules" }); }
+    if (typeof req.body.enabled !== "boolean") return res.status(400).json({ error: "Enabled must be a boolean" });
+    if (channelId) {
+      const channel = await guild.channels.fetch(channelId).catch(() => null);
+      const me = await guild.members.fetchMe();
+      if (!channel?.isSendable() || !("permissionsFor" in channel) || !channel.permissionsFor(me)?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) return res.status(400).json({ error: "Choose a channel the bot can view and send messages in" });
+    }
+    moderationSettings(guild.id);
+    db.prepare("UPDATE moderation_settings SET enabled=?,log_channel_id=?,warning_rules=?,admin_role_id=?,moderator_role_id=? WHERE guild_id=?").run(req.body.enabled ? 1 : 0, channelId || null, JSON.stringify(rules), adminRoleId || null, moderatorRoleId || null, guild.id);
+    res.json({ settings: moderationSettings(guild.id), cases: moderationCases(guild.id) });
+  } catch (error) { next(error); }
+});
 
 app.get("/api/guilds/:guildId/settings", requireUser, canManage, (req, res) => {
   const guild = bot.guilds.cache.get(String(req.params.guildId))!;
