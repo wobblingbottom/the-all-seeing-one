@@ -1,3 +1,4 @@
+import { systemAvailable } from "./premium.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, GuildMember, LabelBuilder, Message, MessageFlags, ModalBuilder, ModalSubmitInteraction, RepliableInteraction, SeparatorBuilder, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, TextDisplayBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } from "discord.js";
 import { db, ensureDefaultEconomySystem, settingsFor } from "./db.js";
 
@@ -56,13 +57,15 @@ function money(guildId: string, amount: number) {
 }
 function systemsFor(guildId: string) {
   ensureDefaultEconomySystem(guildId);
-  return db.prepare("SELECT * FROM economy_systems WHERE guild_id=? AND enabled=1 AND deleted=0 ORDER BY id").all(guildId) as EconomySystem[];
+  return (db.prepare("SELECT * FROM economy_systems WHERE guild_id=? AND enabled=1 AND deleted=0 ORDER BY id").all(guildId) as EconomySystem[]).filter(system=>systemAvailable(guildId,"economy",system.id));
 }
 function accountForSystem(system: EconomySystem, userId: string, username: string) {
   db.prepare("INSERT OR IGNORE INTO economy_balances (system_id,user_id,username,cash) VALUES (?,?,?,?)").run(system.id, userId, username, Math.max(0, system.starting_balance));
   return db.prepare("SELECT cash,bank FROM economy_balances WHERE system_id=? AND user_id=?").get(system.id, userId) as Account;
 }
 function pricesFor(itemId: number) {
+  const linked=db.prepare("SELECT s.id,s.guild_id FROM economy_shop_prices p JOIN economy_systems s ON s.id=p.system_id WHERE p.item_id=?").all(itemId) as Array<{id:number;guild_id:string}>;
+  if(linked.some(system=>!systemAvailable(system.guild_id,"economy",system.id)))return [];
   return db.prepare(`SELECT p.system_id,p.amount,p.join_operator,s.name,s.currency_symbol,s.config_json FROM economy_shop_prices p JOIN economy_systems s ON s.id=p.system_id WHERE p.item_id=? AND s.enabled=1 AND s.deleted=0 ORDER BY p.id`).all(itemId) as ShopPrice[];
 }
 function priceGroups(prices: ShopPrice[]) {

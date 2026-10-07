@@ -8,6 +8,7 @@ import { bot } from "./bot.js";
 import { config } from "./config.js";
 import { db, ensureDefaultEconomySystem, ensureDefaultSystem, settingsFor, xpForLevel } from "./db.js";
 import "./types.js";
+import { premiumStatus, createPremiumSubscription, activatePremiumSubscription, handlePayPalWebhook, startPremiumSync } from "./premium.js";
 
 import { moderationSettings, moderationCases, validateWarningRules } from "./moderation.js";
 
@@ -100,6 +101,24 @@ function canManage(req: Request, res: Response, next: NextFunction) {
   }).catch(next);
 }
 
+const paymentOrigin = new URL(config.redirectUri).origin;
+function paymentRequest(req: Request, res: Response, next: NextFunction) {
+  if (req.headers.origin !== paymentOrigin || !req.is("application/json")) return res.status(403).json({ error: "Invalid payment request" });
+  next();
+}
+app.post("/api/guilds/:guildId/premium/subscriptions", requireUser, canManage, paymentRequest, async (req, res) => {
+  try { res.status(201).json(await createPremiumSubscription(String(req.params.guildId), req.session!.user!.id, paymentOrigin)); }
+  catch { res.status(503).json({ error: "PayPal checkout is unavailable. Please try again later." }); }
+});
+app.post("/api/guilds/:guildId/premium/activate", requireUser, canManage, paymentRequest, async (req, res) => {
+  try { res.json(await activatePremiumSubscription(String(req.body.subscriptionId || ""), String(req.params.guildId), req.session!.user!.id)); }
+  catch { res.status(409).json({ error: "Subscription could not be verified. Approve it in PayPal, then try again." }); }
+});
+app.post("/api/paypal/webhook", async (req, res) => {
+  try { await handlePayPalWebhook(req.headers, req.body); res.sendStatus(204); }
+  catch { res.status(400).json({ error: "Webhook could not be verified" }); }
+});
+
 app.get("/api/guilds/:guildId/moderation", requireUser, canManage, (req, res) => {
   const guildId = String(req.params.guildId);
   res.json({ settings: moderationSettings(guildId), cases: moderationCases(guildId) });
@@ -161,7 +180,7 @@ app.get("/api/guilds/:guildId/settings", requireUser, canManage, (req, res) => {
     prices: db.prepare(`SELECT p.id,p.system_id AS systemId,p.amount,p.join_operator AS operator,s.name,s.currency_symbol AS currencySymbol,s.enabled AS systemEnabled,s.deleted AS systemDeleted
       FROM economy_shop_prices p JOIN economy_systems s ON s.id=p.system_id WHERE p.item_id=? ORDER BY p.id`).all(item.id)
   }));
-  res.json({ systems: detailedSystems, economySystems: economySystems.map(system => ({ ...system, config: JSON.parse(system.config_json || "{}") })), economySharedNames, channels, ruleChannels, roles, emojis, economy, shopItems, memberCount: guild.memberCount });
+  res.json({ premium: premiumStatus(guild.id), systems: detailedSystems, economySystems: economySystems.map(system => ({ ...system, config: JSON.parse(system.config_json || "{}") })), economySharedNames, channels, ruleChannels, roles, emojis, economy, shopItems, memberCount: guild.memberCount });
 });
 
 app.put("/api/guilds/:guildId/economy", requireUser, canManage, (req, res) => {
@@ -215,7 +234,8 @@ app.post("/api/guilds/:guildId/economy/systems", requireUser, canManage, (req, r
   const guildId = String(req.params.guildId);
   ensureDefaultEconomySystem(guildId);
   const count = Number((db.prepare("SELECT COUNT(*) AS count FROM economy_systems WHERE guild_id=? AND deleted=0").get(guildId) as { count: number }).count);
-  if (count >= 10) return res.status(400).json({ error: "A server can have up to 10 economy systems" });
+  const limit = premiumStatus(guildId).systemLimit;
+  if (count >= limit) return res.status(403).json({ error: `This server can have up to ${limit} economy systems. ${limit === 2 ? "Upgrade to premium for 10." : ""}` });
   const name = String(req.body?.name || `Currency ${count + 1}`).trim().slice(0, 50) || `Currency ${count + 1}`;
   const result = db.prepare("INSERT INTO economy_systems (guild_id,name) VALUES (?,?)").run(guildId, name);
   const system = db.prepare("SELECT * FROM economy_systems WHERE id=?").get(Number(result.lastInsertRowid));
@@ -295,7 +315,8 @@ app.post("/api/guilds/:guildId/systems", requireUser, canManage, (req, res) => {
   const guildId = String(req.params.guildId);
   ensureDefaultSystem(guildId);
   const count = (db.prepare("SELECT COUNT(*) AS count FROM leveling_systems WHERE guild_id = ?").get(guildId) as { count: number }).count;
-  if (count >= 10) return res.status(400).json({ error: "A server can have up to 10 leveling systems" });
+  const limit = premiumStatus(guildId).systemLimit;
+  if (count >= limit) return res.status(403).json({ error: `This server can have up to ${limit} leveling systems. ${limit === 2 ? "Upgrade to premium for 10." : ""}` });
   const name = String(req.body?.name || `Leveling system ${count + 1}`).trim().slice(0, 50);
   const result = db.prepare("INSERT INTO leveling_systems (guild_id, name) VALUES (?, ?)").run(guildId, name || `Leveling system ${count + 1}`);
   res.status(201).json({ id: Number(result.lastInsertRowid) });
@@ -489,4 +510,4 @@ app.get("/api/guilds/:guildId/economy/leaderboard", requireUser, canManage, asyn
 });
 
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => { console.error(error); res.status(500).json({ error: "Something went wrong" }); });
-export const startWeb = () => app.listen(config.port, () => console.log(`Dashboard running at http://localhost:${config.port}`));
+export const startWeb = () => { startPremiumSync(); return app.listen(config.port, () => console.log(`Dashboard running at http://localhost:${config.port}`)); };

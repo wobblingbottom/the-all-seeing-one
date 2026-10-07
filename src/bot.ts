@@ -1,3 +1,4 @@
+import { systemAvailable } from "./premium.js";
 import { AttachmentBuilder, Client, Events, GatewayIntentBits, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { config } from "./config.js";
 import { db, ensureDefaultSystem, levelFromXp, xpForLevel } from "./db.js";
@@ -27,7 +28,7 @@ bot.on(Events.MessageCreate, async message => {
   await rewardEconomyMessage(message);
   ensureDefaultSystem(message.guild.id);
   const systems = db.prepare("SELECT * FROM leveling_systems WHERE guild_id = ? AND enabled = 1").all(message.guild.id) as LevelingSystem[];
-  for (const settings of systems) await processSystem(settings, message);
+  for (const settings of systems) if (systemAvailable(message.guild.id, "leveling", settings.id)) await processSystem(settings, message);
 });
 
 async function processSystem(settings: LevelingSystem, message: import("discord.js").Message) {

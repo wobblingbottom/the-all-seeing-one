@@ -55,3 +55,15 @@ Attach a persistent volume at `/data` and set `DATABASE_PATH=/data/crazyland.db`
 Generate a public domain under service Settings > Networking. Set `DISCORD_REDIRECT_URI=https://YOUR-DOMAIN/auth/discord/callback` and add exactly the same URL to the Discord Developer Portal OAuth2 redirects. Deploy the variable changes, then sign in through the public domain.
 
 A new volume starts with an empty database. To retain local data, transfer the SQLite database to the volume while the bot is stopped; do not run local and hosted instances simultaneously.
+
+## PayPal premium subscriptions
+
+Free servers can create two leveling systems and two economy systems. Premium allows 10 of each per server. On cancellation, suspension, or expiry, only the first two systems of each type operate; extra system data is retained. Shop items using an unavailable economy system cannot be purchased.
+
+Create a PayPal REST app and an active recurring billing plan with your chosen price, currency, and interval (no trial is required). Set PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_PLAN_ID, PAYPAL_ENVIRONMENT (sandbox or live), and PAYPAL_WEBHOOK_ID. Credentials, plan, and webhook must belong to the same environment and app. Checkout remains disabled until these are configured. The actual recurring price and terms appear on PayPal before approval.
+
+Register an HTTPS webhook at /api/paypal/webhook on your public domain. Subscribe to BILLING.SUBSCRIPTION.CREATED, BILLING.SUBSCRIPTION.ACTIVATED, BILLING.SUBSCRIPTION.UPDATED, BILLING.SUBSCRIPTION.CANCELLED, BILLING.SUBSCRIPTION.SUSPENDED, BILLING.SUBSCRIPTION.EXPIRED, BILLING.SUBSCRIPTION.PAYMENT.FAILED, PAYMENT.SALE.COMPLETED, PAYMENT.SALE.REFUNDED, and PAYMENT.SALE.REVERSED. Webhook signatures are verified with PayPal; current subscription details are fetched rather than trusting event status. A background check also reconciles subscriptions every five minutes. Access expires at the verified next billing time until renewal is confirmed. Cancellation or suspension removes premium immediately. Subscribers manage cancellation in their PayPal automatic payments settings.
+
+Set DISCORD_REDIRECT_URI to the public site's exact OAuth callback URL; its origin is used for checkout redirects and request validation. Keep one app replica (SQLite and in-process subscription locks).
+
+Before enabling live checkout, test sandbox approval, retry after a failed return, renewal, cancellation, suspension, and webhook delivery with a sandbox buyer. Automated mocked tests do not verify real PayPal account setup.
