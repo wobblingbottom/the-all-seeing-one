@@ -45,3 +45,13 @@ Level `n` requires `n² × 100` total XP. By default, a qualifying message earns
 - Use HTTPS and set `DISCORD_REDIRECT_URI` to the exact public callback URL.
 - Persist the `data/` directory, or replace SQLite with a hosted database before horizontal scaling.
 - Keep `DISCORD_TOKEN`, `DISCORD_CLIENT_SECRET`, and `SESSION_SECRET` out of source control.
+
+## Railway hosting
+
+Deploy this GitHub repository as a Railway service. The Dockerfile provides Node 24 and runs `npm start`. Keep one replica and disable service sleeping for the Discord bot.
+
+Attach a persistent volume at `/data` and set `DATABASE_PATH=/data/crazyland.db`. Set `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `SESSION_SECRET` in Railway Variables using your local values. Never commit `.env`. Railway supplies `PORT`.
+
+Generate a public domain under service Settings > Networking. Set `DISCORD_REDIRECT_URI=https://YOUR-DOMAIN/auth/discord/callback` and add exactly the same URL to the Discord Developer Portal OAuth2 redirects. Deploy the variable changes, then sign in through the public domain.
+
+A new volume starts with an empty database. To retain local data, transfer the SQLite database to the volume while the bot is stopped; do not run local and hosted instances simultaneously.

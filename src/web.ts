@@ -12,6 +12,7 @@ import "./types.js";
 import { moderationSettings, moderationCases, validateWarningRules } from "./moderation.js";
 
 const app = express();
+if (config.redirectUri.startsWith("https://")) app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(cookieSession({ name: "crazyland", keys: [config.sessionSecret], httpOnly: true, sameSite: "lax", secure: config.redirectUri.startsWith("https://"), maxAge: 7 * 864e5 }));
