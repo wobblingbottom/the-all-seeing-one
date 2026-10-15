@@ -43,21 +43,29 @@ function roleTint(role){return /^#[0-9a-f]{6}$/i.test(role?.color||'')&&role.col
 function syncRewardRoleTint(select){const role=state.data.roles.find(item=>item.id===select.value);select.style.color=roleTint(role)}
 function renderRewards(items){$('#reward-list').innerHTML=items.map(r=>rewardRow(r.level,r.role_id)).join('');document.querySelectorAll('.reward-role').forEach(syncRewardRoleTint);$('#no-rewards').classList.toggle('hidden',items.length>0)}
 function rewardRow(level=10,roleId=''){const options=state.data.roles.map(r=>`<option value="${r.id}" data-role-color="${roleTint(r)}" ${r.id===roleId?'selected':''}>@ ${escapeHtml(r.name)}</option>`).join('');return `<div class="reward-row"><input class="reward-level" type="number" min="1" value="${level}" aria-label="Level"><span class="arrow">→</span><select class="reward-role" aria-label="Discord role"><option value="">Select a role</option>${options}</select><button class="remove" title="Remove">×</button></div>`}
-function showTab(name){document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));document.querySelectorAll('.level-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('#'+name).classList.remove('hidden');$('#title').textContent=name==='overview'?'Levels overview':name==='leveling'?'Leveling settings':'Role rewards';$('#crumb').textContent='DASHBOARD / LEVELS / '+name.toUpperCase()}
+function showTab(name){document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));document.querySelectorAll('#level-tabs .level-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('#'+name).classList.remove('hidden');$('#title').textContent=name==='overview'?'Levels overview':name==='leveling'?'Leveling settings':'Role rewards';$('#crumb').textContent='DASHBOARD / LEVELS / '+name.toUpperCase()}
 function showSection(section){
   if(section!=='moderation')flushModerationSave();
   const economy=section==='economy',levels=section==='levels';
   document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.section===section));
   $('#level-tabs').classList.toggle('hidden',!levels);
   $('#economy-tabs').classList.toggle('hidden',!economy);
+  $('#moderation-tabs').classList.toggle('hidden',section!=='moderation');
   $('#system-toolbar').classList.toggle('hidden',!levels);
   document.querySelectorAll('.panel').forEach(panel=>panel.classList.add('hidden'));
   if(economy){renderEconomy();renderEconomyRules();renderShopItems();$('#economy').classList.remove('hidden');showEconomyPage(document.querySelector('.economy-child.active')?.dataset.economyPage||'general')}
   else if(levels)showTab(document.querySelector('#level-tabs .level-tab.active')?.dataset.tab||'overview');
-  else if(section==='moderation'){$('#moderation').classList.remove('hidden');$('#title').textContent='Moderation';$('#crumb').textContent='DASHBOARD / MODERATION';loadModeration()}
+  else if(section==='moderation'){$('#moderation').classList.remove('hidden');showModerationPage(document.querySelector('.moderation-child.active')?.dataset.moderationPage||'overview');loadModeration()}
 }
 document.querySelectorAll('.tab').forEach(button=>button.onclick=()=>showSection(button.dataset.section));
-document.querySelectorAll('.level-tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.querySelectorAll('#level-tabs .level-tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showModerationPage(page){
+  document.querySelectorAll('.moderation-child').forEach(button=>button.classList.toggle('active',button.dataset.moderationPage===page));
+  document.querySelectorAll('[data-moderation-content]').forEach(content=>content.classList.toggle('hidden',content.dataset.moderationContent!==page));
+  $('#title').textContent=page==='honeypot'?'Honeypot':'Moderation overview';
+  $('#crumb').textContent='DASHBOARD / MODERATION / '+page.toUpperCase();
+}
+document.querySelectorAll('.moderation-child').forEach(button=>button.onclick=()=>showModerationPage(button.dataset.moderationPage));
 document.querySelectorAll('.economy-child').forEach(button=>button.onclick=()=>showEconomyPage(button.dataset.economyPage));
 $('#currency-symbol').oninput=()=>{$('#currency-symbol').dataset.emojiId='';updateCurrencyPreview()};
 $('#currency-symbol').readOnly=true;
