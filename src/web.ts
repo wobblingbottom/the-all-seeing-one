@@ -144,8 +144,16 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
       const me = await guild.members.fetchMe();
       if (!channel?.isSendable() || !("permissionsFor" in channel) || !channel.permissionsFor(me)?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages])) return res.status(400).json({ error: "Choose a channel the bot can view and send messages in" });
     }
+    const honeypotChannelId = String(req.body.honeypotChannelId ?? current.honeypot_channel_id ?? "");
+    if (honeypotChannelId) {
+      const channel = await guild.channels.fetch(honeypotChannelId).catch(() => null);
+      const me = await guild.members.fetchMe();
+      if (!channel || channel.type !== 0 || !channel.permissionsFor(me)?.has(PermissionFlagsBits.ViewChannel)) return res.status(400).json({ error: "Choose a text channel the bot can view" });
+      if (!me.permissions.has(PermissionFlagsBits.BanMembers)) return res.status(400).json({ error: "Honeypot requires Ban Members" });
+      if (honeypotChannelId === channelId) return res.status(400).json({ error: "Use separate honeypot and log channels" });
+    }
     moderationSettings(guild.id);
-    db.prepare("UPDATE moderation_settings SET enabled=?,log_channel_id=?,warning_rules=?,admin_role_id=?,moderator_role_id=? WHERE guild_id=?").run(req.body.enabled ? 1 : 0, channelId || null, JSON.stringify(rules), adminRoleId || null, moderatorRoleId || null, guild.id);
+    db.prepare("UPDATE moderation_settings SET enabled=?,log_channel_id=?,warning_rules=?,admin_role_id=?,moderator_role_id=?,honeypot_channel_id=? WHERE guild_id=?").run(req.body.enabled ? 1 : 0, channelId || null, JSON.stringify(rules), adminRoleId || null, moderatorRoleId || null, honeypotChannelId || null, guild.id);
     res.json({ settings: moderationSettings(guild.id), cases: moderationCases(guild.id) });
   } catch (error) { next(error); }
 });

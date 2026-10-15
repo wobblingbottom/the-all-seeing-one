@@ -603,7 +603,7 @@ function scheduleModerationSave(){
   clearTimeout(moderationSaveTimer);moderationSaveTimer=null;
   const version=++moderationEditVersion;
   try{
-    moderationPendingSave={guildId:state.guildId,version,body:{enabled:$('#moderation-enabled').checked,logChannelId:$('#moderation-log-channel').value,adminRoleId:$('#moderation-admin-role').value,moderatorRoleId:$('#moderation-moderator-role').value,warningRules:collectWarningRules()}};
+    moderationPendingSave={guildId:state.guildId,version,body:{enabled:$('#moderation-enabled').checked,logChannelId:$('#moderation-log-channel').value,honeypotChannelId:$('#honeypot-channel').value,adminRoleId:$('#moderation-admin-role').value,moderatorRoleId:$('#moderation-moderator-role').value,warningRules:collectWarningRules()}};
     moderationSaveTimer=setTimeout(flushModerationSave,650);
   }catch(error){moderationPendingSave=null;showSaveToast(error.message,true)}
 }
@@ -648,6 +648,7 @@ function collectWarningRules(){
 }
 $('#add-warning-rule').onclick=()=>{addWarningRule();scheduleModerationSave()};
 $('#moderation-enabled').onchange=scheduleModerationSave;
+$('#honeypot-channel').onchange=scheduleModerationSave;
 $('#moderation-log-channel').onchange=scheduleModerationSave;
 $('#moderation-admin-role').onchange=scheduleModerationSave;
 $('#moderation-moderator-role').onchange=scheduleModerationSave;
@@ -661,6 +662,8 @@ function renderModeration(data){
   $('#warning-rules').innerHTML='';let rules=[];try{rules=JSON.parse(data.settings.warning_rules||'[]')}catch{};rules.forEach(addWarningRule);syncWarningRules();
   $('#moderation-log-channel').innerHTML='<option value="">Disabled</option>'+state.data.channels.map(channel=>`<option value="${channel.id}"># ${escapeHtml(channel.name)}</option>`).join('');
   $('#moderation-log-channel').value=data.settings.log_channel_id||'';
+  $('#honeypot-channel').innerHTML=$('#moderation-log-channel').innerHTML;
+  $('#honeypot-channel').value=data.settings.honeypot_channel_id||'';
   $('#moderation-cases').innerHTML=data.cases.length?data.cases.map(entry=>`<article class="moderation-case"><div><b>#${entry.id} - ${escapeHtml(entry.action)}${entry.cleared?' - Cleared':''}</b><small>${escapeHtml(new Date(entry.created_at).toLocaleString())}</small></div><p>Member: ${escapeHtml(entry.user_id||'N/A')} - Moderator: ${escapeHtml(entry.moderator_id)}</p><p>${escapeHtml(entry.reason)}</p>${moderationMessageLinks(entry)?`<p>${moderationMessageLinks(entry)}</p>`:''}</article>`).join(''):'<div class="empty compact">No moderation cases yet.</div>';
 }
 async function loadModeration(){

@@ -5,7 +5,7 @@ import { db, ensureDefaultSystem, levelFromXp, xpForLevel } from "./db.js";
 import { renderLevelCard } from "./level-card.js";
 import { economyCommands, handleEconomyCommand, rewardEconomyMessage } from "./economy.js";
 
-import { moderationCommands, handleModerationCommand } from "./moderation.js";
+import { moderationCommands, handleModerationCommand, handleHoneypotMessage } from "./moderation.js";
 
 export const bot = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers]
@@ -24,6 +24,7 @@ type ContentFilter = "any" | "text" | "image" | "video" | "link" | "file" | "emb
 type LevelingSystem = { id: number; name: string; enabled: number; min_xp: number; max_xp: number; min_xp_values: string; max_xp_values: string; specific_words: string; cooldown_seconds: number; content_filter: string; announce_destination: "none" | "current" | "dm" | "channel"; announce_channel_id: string | null; announce_message: string };
 
 bot.on(Events.MessageCreate, async message => {
+  if (await handleHoneypotMessage(message)) return;
   if (!message.guild || message.author.bot || !message.member) return;
   await rewardEconomyMessage(message);
   ensureDefaultSystem(message.guild.id);

@@ -123,3 +123,26 @@ test('configured admin and moderator roles grant only their intended actions', a
   const before=h.events.length;await h.api.handleModerationCommand(admin);assert.equal(h.events.length,before+1);assert.equal(h.events.at(-1)[0],'modal');
   h.db.close();
 });
+
+test('honeypot softbans once, skips exempt accounts, and records failed unban as ban', async () => {
+  const h = setup();
+  h.db.prepare('UPDATE moderation_settings SET honeypot_channel_id=?,log_channel_id=?').run('trap', 'log');
+  const member = await h.guild.members.fetch(h.user.id);
+  member.id = h.user.id;
+  member.permissions = { has: () => false };
+  member.roles.cache = new Map();
+  const message = { guild: h.guild, author: h.user, channelId: 'trap', url: 'https://discord.com/channels/guild/trap/message', client: { user: { username: 'Bot' } } };
+  assert.equal(await h.api.handleHoneypotMessage({ ...message, channelId: 'other' }), false);
+  assert.equal(await h.api.handleHoneypotMessage({ ...message, author: { ...h.user, bot: true } }), false);
+  assert.equal(await h.api.handleHoneypotMessage({ ...message, webhookId: 'webhook' }), false);
+  await Promise.all([h.api.handleHoneypotMessage(message), h.api.handleHoneypotMessage(message)]);
+  assert.deepEqual(h.events.filter(e => ['ban','unban'].includes(e[0])).map(e => e[0]), ['ban','unban']);
+  assert.equal(h.db.prepare('SELECT action FROM moderation_cases').get().action, 'softban');
+  h.guild.bans.remove = async () => { throw Error('Network failure'); };
+  await h.api.handleHoneypotMessage(message);
+  assert.equal(h.db.prepare('SELECT action FROM moderation_cases ORDER BY id DESC LIMIT 1').get().action, 'ban');
+  assert(content(h.events.filter(e => e[0] === 'log').at(-1)[1]).includes('remains banned'));
+  member.permissions.has = () => true;
+  assert.equal(await h.api.handleHoneypotMessage(message), false);
+  h.db.close();
+});

@@ -10,7 +10,7 @@ export type WarningRule = { warnings: number; action: "timeout" | "kick" | "ban"
 if (!(db.prepare("PRAGMA table_info(moderation_settings)").all() as Array<{ name: string }>).some(column => column.name === "warning_rules")) {
   db.exec("ALTER TABLE moderation_settings ADD COLUMN warning_rules TEXT NOT NULL DEFAULT '[]'");
 }
-for (const column of ["admin_role_id", "moderator_role_id"]) {
+for (const column of ["admin_role_id", "moderator_role_id", "honeypot_channel_id"]) {
   if (!(db.prepare("PRAGMA table_info(moderation_settings)").all() as Array<{ name: string }>).some(entry => entry.name === column)) db.exec(`ALTER TABLE moderation_settings ADD COLUMN ${column} TEXT`);
 }
 export function validateWarningRules(value: unknown): WarningRule[] {
@@ -32,7 +32,46 @@ function activeWarningCount(guildId: string, userId: string) {
 }
 export function moderationSettings(guildId: string) {
   db.prepare("INSERT OR IGNORE INTO moderation_settings (guild_id) VALUES (?)").run(guildId);
-  return db.prepare("SELECT * FROM moderation_settings WHERE guild_id=?").get(guildId) as { enabled: number; log_channel_id: string | null; warning_rules: string; admin_role_id: string | null; moderator_role_id: string | null };
+  return db.prepare("SELECT * FROM moderation_settings WHERE guild_id=?").get(guildId) as { enabled: number; honeypot_channel_id: string | null; log_channel_id: string | null; warning_rules: string; admin_role_id: string | null; moderator_role_id: string | null };
+}
+const honeypotInFlight = new Set<string>();
+export async function handleHoneypotMessage(message: import("discord.js").Message): Promise<boolean> {
+  const guild = message.guild;
+  if (!guild || message.author.bot || message.webhookId) return false;
+  const settings = moderationSettings(guild.id);
+  if (!settings.enabled || settings.honeypot_channel_id !== message.channelId) return false;
+  const key = `${guild.id}:${message.author.id}`;
+  if (honeypotInFlight.has(key)) return true;
+  honeypotInFlight.add(key);
+  let outcome = "Honeypot failed", failure = "";
+  try {
+    const member = await guild.members.fetch(message.author.id);
+    if (member.id === guild.ownerId || member.permissions.has(P.Administrator) || member.permissions.has(P.BanMembers)
+      || [settings.admin_role_id, settings.moderator_role_id].some(id => id && member.roles.cache.has(id))) return false;
+    const me = await guild.members.fetchMe();
+    if (!me.permissions.has(P.BanMembers) || !member.bannable) throw new Error("Check bot Ban Members permission and role order.");
+    await guild.members.ban(message.author.id, { deleteMessageSeconds: 86400, reason: "Honeypot channel message" });
+    outcome = "Ban";
+    try {
+      await guild.bans.remove(message.author.id, "Honeypot softban: allow rejoining");
+      outcome = "Softban";
+    } catch { failure = "Unban failed; member remains banned. Unban them manually."; }
+    db.prepare("INSERT INTO moderation_cases (guild_id,user_id,moderator_id,action,reason,created_at,message_links) VALUES (?,?,?,?,?,?,?)")
+      .run(guild.id, message.author.id, me.id, outcome.toLowerCase(), "Honeypot channel message", new Date().toISOString(), JSON.stringify([message.url]));
+  } catch (error) {
+    failure = error instanceof Error ? error.message : "Could not softban member.";
+  } finally { honeypotInFlight.delete(key); }
+  if (failure) console.error(`Honeypot ${guild.id}/${message.author.id}: ${failure}`);
+  if (settings.log_channel_id) {
+    try {
+      const channel = await guild.channels.fetch(settings.log_channel_id);
+      if (!channel?.isSendable()) throw new Error("Moderation log channel unavailable");
+      await channel.send({ embeds: [new EmbedBuilder().setColor(0xf45f77).setDescription(
+        `${outcome}: ${message.author.username}\nMod: ${message.client.user?.username || "Bot"}\nReason: Honeypot channel message\n${message.url}${failure ? `\n${failure}` : ""}`
+      )], allowedMentions: { parse: [] } });
+    } catch (error) { console.error("Honeypot log failed", error); }
+  }
+  return true;
 }
 export function moderationCases(guildId: string) {
   return db.prepare("SELECT * FROM moderation_cases WHERE guild_id=? ORDER BY id DESC LIMIT 50").all(guildId);
