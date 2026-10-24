@@ -5,6 +5,33 @@ const vm = require('node:vm');
 const { DatabaseSync } = require('node:sqlite');
 const ts = require('typescript');
 const discord = require('discord.js');
+test('honeypot validation accepts text and announcement channels and refreshes permissions', async () => {
+  const web = fs.readFileSync('src/web.ts', 'utf8');
+  const validation = web.slice(web.indexOf('    const honeypotChannelId ='), web.indexOf('    moderationSettings(guild.id);', web.indexOf('    const honeypotChannelId =')));
+  for (const [type, visible, expected] of [
+    [discord.ChannelType.GuildText, true, null],
+    [discord.ChannelType.GuildAnnouncement, true, null],
+    [discord.ChannelType.GuildText, false, 'The bot needs View Channel permission in the honeypot channel'],
+    [discord.ChannelType.GuildForum, true, 'Choose a text or announcement channel'],
+  ]) {
+    let error = null;
+    const me = { permissions: { has: () => true } };
+    const context = {
+      req: { body: { honeypotChannelId: 'trap' } }, current: {}, channelId: 'log',
+      ChannelType: discord.ChannelType, PermissionFlagsBits: discord.PermissionFlagsBits,
+      guild: {
+        channels: { fetch: async (id, options) => {
+          assert.equal(id, 'trap'); assert.equal(options.force, true);
+          return { type, permissionsFor: member => { assert.equal(member, me); return { has: () => visible }; } };
+        } },
+        members: { fetchMe: async options => { assert.equal(options.force, true); return me; } },
+      },
+      res: { status: code => { assert.equal(code, 400); return { json: body => { error = body.error; } }; } },
+    };
+    await vm.runInNewContext(`(async () => { ${validation} })()`, context);
+    assert.equal(error, expected);
+  }
+});
 const source = ts.transpileModule(fs.readFileSync('src/moderation.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 function setup() {
   const db = new DatabaseSync(':memory:');

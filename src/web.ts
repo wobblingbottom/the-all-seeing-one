@@ -146,9 +146,10 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
     }
     const honeypotChannelId = String(req.body.honeypotChannelId ?? current.honeypot_channel_id ?? "");
     if (honeypotChannelId) {
-      const channel = await guild.channels.fetch(honeypotChannelId).catch(() => null);
-      const me = await guild.members.fetchMe();
-      if (!channel || channel.type !== 0 || !channel.permissionsFor(me)?.has(PermissionFlagsBits.ViewChannel)) return res.status(400).json({ error: "Choose a text channel the bot can view" });
+      const channel = await guild.channels.fetch(honeypotChannelId, { force: true }).catch(() => null);
+      const me = await guild.members.fetchMe({ force: true });
+      if (!channel || (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement)) return res.status(400).json({ error: "Choose a text or announcement channel" });
+      if (!channel.permissionsFor(me)?.has(PermissionFlagsBits.ViewChannel)) return res.status(400).json({ error: "The bot needs View Channel permission in the honeypot channel" });
       if (!me.permissions.has(PermissionFlagsBits.BanMembers)) return res.status(400).json({ error: "Honeypot requires Ban Members" });
       if (honeypotChannelId === channelId) return res.status(400).json({ error: "Use separate honeypot and log channels" });
     }
