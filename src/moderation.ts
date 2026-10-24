@@ -50,16 +50,25 @@ export async function handleHoneypotMessage(message: import("discord.js").Messag
       || [settings.admin_role_id, settings.moderator_role_id].some(id => id && member.roles.cache.has(id))) return false;
     const me = await guild.members.fetchMe();
     if (!me.permissions.has(P.BanMembers) || !member.bannable) throw new Error("Check bot Ban Members permission and role order.");
+    try {
+      await message.author.send({
+        components: [new ContainerBuilder().setAccentColor(0xf45f77).addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(`You were banned from ${guild.name} for posting in a honeypot channel.`)
+        )],
+        flags: MessageFlags.IsComponentsV2,
+        allowedMentions: { parse: [] }
+      });
+    } catch { failure = "Could not DM member."; }
     await guild.members.ban(message.author.id, { deleteMessageSeconds: 86400, reason: "Honeypot channel message" });
     outcome = "Ban";
     try {
       await guild.bans.remove(message.author.id, "Honeypot softban: allow rejoining");
       outcome = "Softban";
-    } catch { failure = "Unban failed; member remains banned. Unban them manually."; }
+    } catch { failure = [failure, "Unban failed; member remains banned. Unban them manually."].filter(Boolean).join("\n"); }
     db.prepare("INSERT INTO moderation_cases (guild_id,user_id,moderator_id,action,reason,created_at,message_links) VALUES (?,?,?,?,?,?,?)")
       .run(guild.id, message.author.id, me.id, outcome.toLowerCase(), "Honeypot channel message", new Date().toISOString(), JSON.stringify([message.url]));
   } catch (error) {
-    failure = error instanceof Error ? error.message : "Could not softban member.";
+    failure = [failure, error instanceof Error ? error.message : "Could not softban member."].filter(Boolean).join("\n");
   } finally { honeypotInFlight.delete(key); }
   if (failure) console.error(`Honeypot ${guild.id}/${message.author.id}: ${failure}`);
   if (settings.log_channel_id) {
