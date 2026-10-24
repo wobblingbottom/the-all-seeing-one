@@ -3,7 +3,7 @@ import path from "node:path";
 import express, { NextFunction, Request, Response } from "express";
 import cookieSession from "cookie-session";
 import helmet from "helmet";
-import { ChannelType, PermissionFlagsBits } from "discord.js";
+import { ChannelType, ContainerBuilder, MessageFlags, PermissionFlagsBits, SeparatorBuilder, TextDisplayBuilder } from "discord.js";
 import { bot } from "./bot.js";
 import { config } from "./config.js";
 import { db, ensureDefaultEconomySystem, ensureDefaultSystem, settingsFor, xpForLevel } from "./db.js";
@@ -152,6 +152,21 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
       if (!channel.permissionsFor(me)?.has(PermissionFlagsBits.ViewChannel)) return res.status(400).json({ error: "The bot needs View Channel permission in the honeypot channel" });
       if (!me.permissions.has(PermissionFlagsBits.BanMembers)) return res.status(400).json({ error: "Honeypot requires Ban Members" });
       if (honeypotChannelId === channelId) return res.status(400).json({ error: "Use separate honeypot and log channels" });
+      if (honeypotChannelId !== current.honeypot_channel_id) {
+        if (!channel.permissionsFor(me)?.has(PermissionFlagsBits.SendMessages)) return res.status(400).json({ error: "The bot needs Send Messages permission to post the honeypot warning" });
+        try {
+          await channel.send({
+            components: [new ContainerBuilder().setAccentColor(0xf45f77)
+              .addTextDisplayComponents(new TextDisplayBuilder().setContent("**Honeypot channel**"))
+              .addSeparatorComponents(new SeparatorBuilder())
+              .addTextDisplayComponents(new TextDisplayBuilder().setContent("Do not post here. When moderation is enabled, posting here will ban you and delete your messages from the last 24 hours across the server. You will then be unbanned, but must rejoin yourself. Staff are exempt."))],
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { parse: [] }
+          });
+        } catch {
+          return res.status(400).json({ error: "Could not post the honeypot warning. Check the bot's channel permissions and try again." });
+        }
+      }
     }
     moderationSettings(guild.id);
     db.prepare("UPDATE moderation_settings SET enabled=?,log_channel_id=?,warning_rules=?,admin_role_id=?,moderator_role_id=?,honeypot_channel_id=? WHERE guild_id=?").run(req.body.enabled ? 1 : 0, channelId || null, JSON.stringify(rules), adminRoleId || null, moderatorRoleId || null, honeypotChannelId || null, guild.id);
