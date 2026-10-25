@@ -587,7 +587,8 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
     await replyV2(interaction, "Item used", `You used **${item.name}**.`, true);
   } else if (name === "leaderboard") {
     if (!enabled(config, "leaderboardEnabled")) return void await replyV2(interaction, "Leaderboard hidden", "The economy leaderboard is hidden.", true);
-    const rows = db.prepare("SELECT user_id,username,cash,bank,cash+bank AS total FROM economy_accounts WHERE guild_id=? ORDER BY total DESC LIMIT 10").all(guildId) as Array<{ user_id: string; username: string | null; cash: number; bank: number; total: number }>;
+    const system = systemsFor(guildId)[0];
+    const rows = system ? db.prepare("SELECT user_id,username,cash,bank,cash+bank AS total FROM economy_balances WHERE system_id=? ORDER BY total DESC, user_id ASC LIMIT 10").all(system.id) as Array<{ user_id: string; username: string | null; cash: number; bank: number; total: number }> : [];
     await replyV2(interaction, label(sharedConfig, "leaderboardName", "Richest members"), rows.length ? rows.map((row, index) => `**${index + 1}.** ${row.username || `User ${row.user_id}`} — ${money(guildId, row.total)}`).join("\n") : "No economy accounts exist yet.");
   }
   return true;

@@ -52,6 +52,8 @@ Deploy this GitHub repository as a Railway service. The Dockerfile provides Node
 
 Attach a persistent volume at `/data` and set `DATABASE_PATH=/data/crazyland.db`. Set `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `SESSION_SECRET` in Railway Variables using your local values. Never commit `.env`. Railway supplies `PORT`.
 
+The bot defaults to the Railway volume mount when `DATABASE_PATH` is unset and rejects paths outside that mount. A relative path such as `./data/crazyland.db` resolves under `/app`, outside the `/data` volume, and loses data when the container is replaced. Before correcting an existing deployment, back up its active SQLite database onto the volume using SQLite's backup API, then change the variable and redeploy.
+
 Generate a public domain under service Settings > Networking. Set `DISCORD_REDIRECT_URI=https://YOUR-DOMAIN/auth/discord/callback` and add exactly the same URL to the Discord Developer Portal OAuth2 redirects. Deploy the variable changes, then sign in through the public domain.
 
 A new volume starts with an empty database. To retain local data, transfer the SQLite database to the volume while the bot is stopped; do not run local and hosted instances simultaneously.

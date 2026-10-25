@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { databasePathFor } from "./database-path.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -13,7 +14,7 @@ export const config = {
   redirectUri: process.env.DISCORD_REDIRECT_URI ?? "http://localhost:3000/auth/discord/callback",
   sessionSecret: required("SESSION_SECRET"),
   port: Number(process.env.PORT ?? 3000),
-  databasePath: process.env.DATABASE_PATH ?? "./data/crazyland.db",
+  databasePath: databasePathFor(process.env),
   paypal: {
     clientId: process.env.PAYPAL_CLIENT_ID ?? "",
     clientSecret: process.env.PAYPAL_CLIENT_SECRET ?? "",
