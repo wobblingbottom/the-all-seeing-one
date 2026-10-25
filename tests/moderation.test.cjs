@@ -14,11 +14,13 @@ test('honeypot validation accepts text and announcement channels and refreshes p
     [discord.ChannelType.GuildText, false, 'The bot needs View Channel permission in the honeypot channel'],
     [discord.ChannelType.GuildForum, true, 'Choose a text or announcement channel'],
     [discord.ChannelType.GuildText, true, null, { unchanged: true }],
+    [discord.ChannelType.GuildText, true, 'Could not allow everyone to post. The bot needs Manage Roles permission in the honeypot channel.', { permissionsFail: true }],
     [discord.ChannelType.GuildText, true, 'The bot needs Send Messages permission to post the honeypot warning', { sendDenied: true }],
     [discord.ChannelType.GuildText, true, "Could not post the honeypot warning. Check the bot's channel permissions and try again.", { sendFails: true }],
   ]) {
     let error = null;
     const sent = [];
+    const edits = [];
     const me = { permissions: { has: () => true } };
     const context = {
       req: { body: { honeypotChannelId: 'trap' } }, current: { honeypot_channel_id: extra.unchanged ? 'trap' : null }, channelId: 'log',
@@ -26,18 +28,35 @@ test('honeypot validation accepts text and announcement channels and refreshes p
       ContainerBuilder: discord.ContainerBuilder, TextDisplayBuilder: discord.TextDisplayBuilder,
       SeparatorBuilder: discord.SeparatorBuilder, MessageFlags: discord.MessageFlags,
       guild: {
+        id: 'guild',
         channels: { fetch: async (id, options) => {
           assert.equal(id, 'trap'); assert.equal(options.force, true);
           return { type, permissionsFor: member => { assert.equal(member, me); return { has: permission => permission === discord.PermissionFlagsBits.SendMessages ? !extra.sendDenied : visible }; },
+            permissionOverwrites: {
+              cache: new Map([
+                ['role', { id: 'role', deny: new discord.PermissionsBitField([discord.PermissionFlagsBits.ViewChannel, discord.PermissionFlagsBits.SendMessages]) }],
+                ['member', { id: 'member', deny: new discord.PermissionsBitField([discord.PermissionFlagsBits.SendMessages]) }],
+                ['other', { id: 'other', deny: new discord.PermissionsBitField([discord.PermissionFlagsBits.ManageMessages]) }],
+              ]),
+              edit: async (id, permissions) => { if (extra.permissionsFail) throw Error('Forbidden'); edits.push([id, { ...permissions }]); },
+            },
             send: async payload => { if (extra.sendFails) throw Error('Forbidden'); sent.push(payload); } };
         } },
         members: { fetchMe: async options => { assert.equal(options.force, true); return me; } },
       },
       res: { status: code => { assert.equal(code, 400); return { json: body => { error = body.error; } }; } },
     };
-    await vm.runInNewContext(`(async () => { ${validation} })()`, context);
+    const script = ts.transpileModule(`(async () => { ${validation} })()`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+    await vm.runInNewContext(script, context);
     assert.equal(error, expected);
     assert.equal(sent.length, !expected && !extra.unchanged ? 1 : 0);
+    if (visible && type !== discord.ChannelType.GuildForum && !extra.permissionsFail) {
+      assert.deepEqual(edits, [
+        ['guild', { ViewChannel: true, SendMessages: true }],
+        ['role', { ViewChannel: null, SendMessages: null }],
+        ['member', { SendMessages: null }],
+      ]);
+    } else assert.equal(edits.length, 0);
     if (sent.length) {
       assert.equal(sent[0].flags, discord.MessageFlags.IsComponentsV2);
       const container = sent[0].components[0].toJSON();

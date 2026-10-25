@@ -1,0 +1,15 @@
+.legal-page .legal-nav{display:flex;flex-wrap:wrap;gap:20px;font-size:14px}
+.legal-page .legal-nav a{color:var(--lp-text)}
+.legal-content{max-width:820px;margin:auto;padding:64px 24px 80px;line-height:1.8}
+.legal-content h1{font-size:clamp(32px,6vw,48px);line-height:1.2;margin:0 0 12px}
+.legal-content h2{font-size:21px;line-height:1.4;margin:36px 0 10px;color:var(--lp-text)}
+.legal-content p,.legal-content li{color:var(--lp-muted)}
+.legal-content ul{padding-left:24px}
+.legal-content a{color:#f59bad;text-decoration:underline;text-underline-offset:3px}
+.legal-content .updated{font-size:14px;margin-bottom:32px}
+.legal-content section{scroll-margin-top:24px}
+.legal-links{display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
+.dashboard-legal{padding:20px 0;color:#b5bac1}
+.dashboard-legal a{color:inherit}
+.legal-page a:focus-visible{outline:2px solid #f45f77;outline-offset:5px}
+@media(max-width:650px){.legal-page .landing-nav{height:auto;min-height:82px;padding-block:18px;gap:20px;flex-wrap:wrap}.legal-content{padding-top:40px}}

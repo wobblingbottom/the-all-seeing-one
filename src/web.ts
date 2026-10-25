@@ -152,6 +152,18 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
       if (!channel.permissionsFor(me)?.has(PermissionFlagsBits.ViewChannel)) return res.status(400).json({ error: "The bot needs View Channel permission in the honeypot channel" });
       if (!me.permissions.has(PermissionFlagsBits.BanMembers)) return res.status(400).json({ error: "Honeypot requires Ban Members" });
       if (honeypotChannelId === channelId) return res.status(400).json({ error: "Use separate honeypot and log channels" });
+      try {
+        await channel.permissionOverwrites.edit(guild.id, { ViewChannel: true, SendMessages: true }, { reason: "Honeypot channel setup" });
+        for (const overwrite of channel.permissionOverwrites.cache.values()) {
+          if (overwrite.id === guild.id) continue;
+          const permissions: { ViewChannel?: null; SendMessages?: null } = {};
+          if (overwrite.deny.has(PermissionFlagsBits.ViewChannel)) permissions.ViewChannel = null;
+          if (overwrite.deny.has(PermissionFlagsBits.SendMessages)) permissions.SendMessages = null;
+          if (Object.keys(permissions).length) await channel.permissionOverwrites.edit(overwrite.id, permissions, { reason: "Honeypot channel setup" });
+        }
+      } catch {
+        return res.status(400).json({ error: "Could not allow everyone to post. The bot needs Manage Roles permission in the honeypot channel." });
+      }
       if (honeypotChannelId !== current.honeypot_channel_id) {
         if (!channel.permissionsFor(me)?.has(PermissionFlagsBits.SendMessages)) return res.status(400).json({ error: "The bot needs Send Messages permission to post the honeypot warning" });
         try {
@@ -159,7 +171,7 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
             components: [new ContainerBuilder().setAccentColor(0xf45f77)
               .addTextDisplayComponents(new TextDisplayBuilder().setContent("**Honeypot channel**"))
               .addSeparatorComponents(new SeparatorBuilder())
-              .addTextDisplayComponents(new TextDisplayBuilder().setContent("Do not post here. When moderation is enabled, posting here will ban you and delete your messages from the last 24 hours across the server. You will then be unbanned, but must rejoin yourself. Staff are exempt."))],
+              .addTextDisplayComponents(new TextDisplayBuilder().setContent("Do not post here. Posting in this channel will get you banned."))],
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { parse: [] }
           });
