@@ -202,6 +202,7 @@ export async function renderLeaderboardCard(title: string, rows: LeaderboardRow[
   const width = 1200, rowHeight = 100, gap = 14, top = 80;
   const canvas = createCanvas(width, top + rows.length * (rowHeight + gap) + 6);
   const ctx = canvas.getContext("2d");
+  ctx.letterSpacing = "2px";
   ctx.fillStyle = "#2b2d31";
   ctx.fillRect(0, 0, width, canvas.height);
   ctx.fillStyle = "#f2f3f5";
