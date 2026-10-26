@@ -1187,6 +1187,30 @@ label small {
   color: var(--discord-faint);
 }
 
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-spinner {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: loading-spin 2s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner { animation: none; }
+}
+
 .save-state {
   color: var(--discord-text);
   background: var(--discord-surface-raised);
