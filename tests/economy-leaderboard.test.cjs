@@ -16,9 +16,20 @@ test('Discord leaderboard reads current balances and isolates the active currenc
     const start = source.indexOf('    if (!enabled(config, "leaderboardEnabled"))');
     const end = source.indexOf('\n  }', start);
     assert.ok(start >= 0 && end > start);
-    let reply;
+    let reply, deferred = false, attachment;
     const context = {
-      db, guildId: 'guild', config: {}, sharedConfig: {}, interaction: {},
+      db, guildId: 'guild', config: {}, sharedConfig: {}, interaction: {
+        deferReply: async () => { deferred = true; },
+        client: { users: { fetch: async () => null } },
+        editReply: async payload => { attachment = payload.files[0]; }
+      },
+      AttachmentBuilder: class {},
+      renderLeaderboardCard: async (_title, rows) => {
+        assert.equal(deferred, true);
+        assert.deepEqual(Array.from(rows, row => row.rank), [1, 2]);
+        reply = rows.map(row => `${row.username} ${row.value}`).join('\n');
+        return Buffer.alloc(0);
+      },
       enabled: () => true, systemsFor: () => [{ id: 2 }],
       label: (_config, _key, fallback) => fallback,
       money: (_guild, amount) => `${amount} coins`,
@@ -31,5 +42,6 @@ test('Discord leaderboard reads current balances and isolates the active currenc
     assert.match(reply, /Current member.*30 coins/);
     assert.match(reply, /Second member.*5 coins/);
     assert.doesNotMatch(reply, /Outdated account|Other currency/);
+    assert.ok(attachment);
   } finally { db.close(); }
 });

@@ -1,4 +1,6 @@
 import { systemAvailable } from "./premium.js";
+import { AttachmentBuilder } from "discord.js";
+import { renderLeaderboardCard } from "./level-card.js";
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ContainerBuilder, GuildMember, LabelBuilder, Message, MessageFlags, ModalBuilder, ModalSubmitInteraction, RepliableInteraction, SeparatorBuilder, SlashCommandBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction, TextDisplayBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } from "discord.js";
 import { db, ensureDefaultEconomySystem, settingsFor } from "./db.js";
 
@@ -589,7 +591,26 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
     if (!enabled(config, "leaderboardEnabled")) return void await replyV2(interaction, "Leaderboard hidden", "The economy leaderboard is hidden.", true);
     const system = systemsFor(guildId)[0];
     const rows = system ? db.prepare("SELECT user_id,username,cash,bank,cash+bank AS total FROM economy_balances WHERE system_id=? ORDER BY total DESC, user_id ASC LIMIT 10").all(system.id) as Array<{ user_id: string; username: string | null; cash: number; bank: number; total: number }> : [];
-    await replyV2(interaction, label(sharedConfig, "leaderboardName", "Richest members"), rows.length ? rows.map((row, index) => `**${index + 1}.** ${row.username || `User ${row.user_id}`} — ${money(guildId, row.total)}`).join("\n") : "No economy accounts exist yet.");
+    const title = label(sharedConfig, "leaderboardName", "Richest members");
+    if (!rows.length) return void await replyV2(interaction, title, "No economy accounts exist yet.");
+    await interaction.deferReply();
+    const symbol = system?.currency_symbol || "";
+    const customEmoji = symbol.match(/<a?:[^:>]+:(\d+)>/);
+    const profiles = await Promise.all(rows.map(async (row, index) => {
+      const user = await interaction.client.users.fetch(row.user_id, { force: true }).catch(() => null);
+      const member = await interaction.guild?.members.fetch(row.user_id).catch(() => null);
+      const nameplate = member?.collectibles?.nameplate ?? user?.collectibles?.nameplate;
+      return {
+        rank: index + 1,
+        username: user?.username ?? row.username ?? `User ${row.user_id}`,
+        avatarUrl: user?.displayAvatarURL({ extension: "png", size: 128 }) ?? "",
+        avatarDecorationUrl: member?.avatarDecorationURL() ?? user?.avatarDecorationURL({ extension: "png", size: 128 }),
+        nameplateUrl: nameplate ? `https://cdn.discordapp.com/assets/collectibles/${nameplate.asset}static.png` : null,
+        value: customEmoji ? Math.floor(row.total).toLocaleString() : money(guildId, row.total)
+      };
+    }));
+    const image = await renderLeaderboardCard(title, profiles, customEmoji ? `https://cdn.discordapp.com/emojis/${customEmoji[1]}.png?size=64` : undefined);
+    await interaction.editReply({ files: [new AttachmentBuilder(image, { name: "economy-leaderboard.png" })], allowedMentions: { parse: [] } });
   }
   return true;
 }

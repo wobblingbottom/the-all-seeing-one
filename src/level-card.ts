@@ -191,3 +191,74 @@ export async function renderLevelCard(data: LevelCardData): Promise<Buffer> {
 
   return canvas.encode("png");
 }
+
+export type LeaderboardRow = Pick<LevelCardData, "username" | "avatarUrl" | "avatarDecorationUrl" | "nameplateUrl" | "accentColor"> & {
+  rank: number;
+  value: string;
+};
+
+/** Dashboard-style rows, using the same Discord artwork loader as /level. */
+export async function renderLeaderboardCard(title: string, rows: LeaderboardRow[], currencyIconUrl?: string): Promise<Buffer> {
+  const width = 1200, rowHeight = 100, gap = 14, top = 80;
+  const canvas = createCanvas(width, top + rows.length * (rowHeight + gap) + 6);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#2b2d31";
+  ctx.fillRect(0, 0, width, canvas.height);
+  ctx.fillStyle = "#f2f3f5";
+  ctx.font = "700 26px sans-serif";
+  ctx.fillText(title, 24, 38, width - 48);
+  ctx.fillStyle = "#45474c";
+  ctx.fillRect(24, 56, width - 48, 2);
+  const icon = currencyIconUrl ? await cachedImage(currencyIconUrl) : null;
+  const assets = await Promise.all(rows.map(async row => ({
+    avatar: row.avatarUrl ? await cachedImage(row.avatarUrl) : null,
+    decoration: row.avatarDecorationUrl ? await cachedImage(row.avatarDecorationUrl) : null,
+    nameplate: row.nameplateUrl ? await cachedImage(row.nameplateUrl) : null
+  })));
+  rows.forEach((row, index) => {
+    const y = top + index * (rowHeight + gap);
+    const { avatar, decoration, nameplate } = assets[index];
+    ctx.save();
+    roundedRect(ctx, 16, y, width - 32, rowHeight, 6);
+    ctx.clip();
+    ctx.fillStyle = nameplate ? prominentColor(nameplate) ?? "#313338" : "#313338";
+    ctx.fillRect(16, y, width - 32, rowHeight);
+    ctx.fillStyle = "#2b2d31a0";
+    ctx.fillRect(16, y, width - 32, rowHeight);
+    if (nameplate) {
+      // Preserve the original aspect ratio and mirror the outer artwork at left.
+      const artWidth = rowHeight * nameplate.width / nameplate.height;
+      ctx.drawImage(nameplate, width - 16 - artWidth, y, artWidth, rowHeight);
+      ctx.save();
+      ctx.translate(width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(nameplate, width - 16 - artWidth, y, artWidth, rowHeight);
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.fillStyle = "#f2f3f5";
+    ctx.font = "700 24px sans-serif";
+    ctx.fillText(`#${row.rank}`, 210, y + 59);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(326, y + 50, 32, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = "#45474c";
+    ctx.fillRect(294, y + 18, 64, 64);
+    if (avatar) ctx.drawImage(avatar, 294, y + 18, 64, 64);
+    ctx.restore();
+    if (decoration) ctx.drawImage(decoration, 286, y + 10, 80, 80);
+    ctx.font = "500 23px sans-serif";
+    let username = row.username;
+    while (username.length && ctx.measureText(username).width > 345) username = username.slice(0, -1);
+    ctx.fillText(username === row.username ? username : `${username.slice(0, -1)}…`, 378, y + 58);
+    ctx.font = "700 22px sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(row.value, 992, y + 58, 235);
+    if (icon) ctx.drawImage(icon, 1004, y + 34, 28, 28);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#45474c";
+    ctx.fillRect(16, y + rowHeight + 6, width - 32, 1);
+  });
+  return canvas.encode("png");
+}
