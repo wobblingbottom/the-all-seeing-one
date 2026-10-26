@@ -44,6 +44,13 @@ function compact(value: number) {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
+function fittedText(ctx: SKRSContext2D, text: string, maxWidth: number) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  const characters = Array.from(text);
+  while (characters.length && ctx.measureText(`${characters.join("")}…`).width > maxWidth) characters.pop();
+  return `${characters.join("")}…`;
+}
+
 async function dominantColor(url?: string | null) {
   if (!url) return null;
   try {
@@ -92,15 +99,15 @@ function prominentColor(image: Image) {
 }
 
 export async function renderLevelCard(data: LevelCardData): Promise<Buffer> {
-  // Discord nameplates are only 672×126. A 1008×189 card keeps their exact
-  // 5.33:1 ratio while limiting enlargement to 1.5× to avoid visible blur.
-  const width = 1008;
-  const height = 189;
+  // A taller, narrower card keeps the text readable in Discord's mobile preview.
+  const width = 800;
+  const height = 240;
   const scale = 1;
   const canvas = createCanvas(width * scale, height * scale);
   const ctx = canvas.getContext("2d");
   ctx.scale(scale, scale);
   ctx.imageSmoothingEnabled = true;
+  ctx.letterSpacing = "2px";
 
   const nameplate = data.nameplateUrl ? await cachedImage(data.nameplateUrl) : null;
   const profileColor = (nameplate ? prominentColor(nameplate) : null)
@@ -115,8 +122,9 @@ export async function renderLevelCard(data: LevelCardData): Promise<Buffer> {
   ctx.fillStyle = "#313338";
   ctx.fillRect(0, 0, width, height);
   if (nameplate) {
-    // The source and card have the same aspect ratio: no crop and no distortion.
-    ctx.drawImage(nameplate, 0, 0, width, height);
+    // Preserve the artwork's aspect ratio, keeping its decorated right edge.
+    const artworkWidth = height * nameplate.width / nameplate.height;
+    ctx.drawImage(nameplate, width - artworkWidth, 0, artworkWidth, height);
   } else {
     const fallback = ctx.createLinearGradient(0, 0, width, height);
     fallback.addColorStop(0, "#313338");
@@ -126,9 +134,9 @@ export async function renderLevelCard(data: LevelCardData): Promise<Buffer> {
     ctx.fillRect(0, 0, width, height);
   }
   const shade = ctx.createLinearGradient(0, 0, width, 0);
-  shade.addColorStop(0, "#0e0f0d40");
-  shade.addColorStop(0.55, "#0e0f0d20");
-  shade.addColorStop(1, "#0e0f0d00");
+  shade.addColorStop(0, "#0e0f0d70");
+  shade.addColorStop(0.75, "#0e0f0db0");
+  shade.addColorStop(1, "#0e0f0d40");
   ctx.fillStyle = shade;
   ctx.fillRect(0, 0, width, height);
   ctx.restore();
@@ -158,36 +166,35 @@ export async function renderLevelCard(data: LevelCardData): Promise<Buffer> {
   ctx.shadowColor = "#000000dd";
   ctx.shadowBlur = 5;
   ctx.fillStyle = "#d7d8d1";
-  ctx.font = "700 11px sans-serif";
-  ctx.fillText(data.systemName.toUpperCase(), 180, 34);
+  ctx.font = "700 22px sans-serif";
+  ctx.fillText(fittedText(ctx, data.systemName.toUpperCase(), 590), 180, 34);
   ctx.fillStyle = profileColor;
-  ctx.font = hasBatmosFont ? "31px Batmos" : "700 31px sans-serif";
+  ctx.font = hasBatmosFont ? "42px Batmos" : "700 42px sans-serif";
   const capitalizedUsername = data.username.charAt(0).toUpperCase() + data.username.slice(1);
-  const displayName = capitalizedUsername.length > 24 ? `${capitalizedUsername.slice(0, 23)}…` : capitalizedUsername;
-  ctx.fillText(displayName, 180, 75);
+  ctx.fillText(fittedText(ctx, capitalizedUsername, 590), 180, 85);
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "700 17px sans-serif";
-  ctx.fillText(`LEVEL ${data.level}`, 180, 110);
-  ctx.fillText(`RANK #${data.rank}`, 338, 110);
+  ctx.font = "700 30px sans-serif";
+  ctx.fillText(fittedText(ctx, `LEVEL ${data.level}`, 280), 180, 130);
+  ctx.fillText(fittedText(ctx, `RANK #${data.rank}`, 290), 480, 130);
 
   const progress = data.levelXpRequired ? Math.min(1, Math.max(0, data.levelXp / data.levelXpRequired)) : 0;
-  roundedRect(ctx, 180, 126, 690, 14, 7);
+  roundedRect(ctx, 180, 150, 590, 18, 9);
   ctx.fillStyle = "#11120fd6";
   ctx.fill();
   if (progress > 0) {
-    roundedRect(ctx, 180, 126, Math.max(14, 690 * progress), 14, 7);
-    const bar = ctx.createLinearGradient(180, 0, 870, 0);
+    roundedRect(ctx, 180, 150, Math.max(18, 590 * progress), 18, 9);
+    const bar = ctx.createLinearGradient(180, 0, 770, 0);
     bar.addColorStop(0, profileColor);
     bar.addColorStop(1, "#ffffff");
     ctx.fillStyle = bar;
     ctx.fill();
   }
   ctx.fillStyle = "#f1f1ec";
-  ctx.font = "600 11px sans-serif";
-  ctx.fillText(`${compact(data.levelXp)} / ${compact(data.levelXpRequired)} XP`, 180, 164);
-  ctx.fillText(`${compact(Math.round(data.averageXpPerMinute ?? 0))} AVG XP/MIN`, 338, 164);
+  ctx.font = "600 24px sans-serif";
+  ctx.fillText(fittedText(ctx, `${compact(data.levelXp)} / ${compact(data.levelXpRequired)} XP`, 590), 180, 198);
+  ctx.fillText(fittedText(ctx, `${compact(Math.round(data.averageXpPerMinute ?? 0))} AVG XP/MIN`, 590), 180, 228);
 
   return canvas.encode("png");
 }
@@ -199,17 +206,17 @@ export type LeaderboardRow = Pick<LevelCardData, "username" | "avatarUrl" | "ava
 
 /** Dashboard-style rows, using the same Discord artwork loader as /level. */
 export async function renderLeaderboardCard(title: string, rows: LeaderboardRow[], currencyIconUrl?: string): Promise<Buffer> {
-  const width = 1200, rowHeight = 100, gap = 14, top = 80;
+  const width = 900, rowHeight = 120, gap = 14, top = 90;
   const canvas = createCanvas(width, top + rows.length * (rowHeight + gap) + 6);
   const ctx = canvas.getContext("2d");
   ctx.letterSpacing = "2px";
   ctx.fillStyle = "#2b2d31";
   ctx.fillRect(0, 0, width, canvas.height);
   ctx.fillStyle = "#f2f3f5";
-  ctx.font = "700 26px sans-serif";
-  ctx.fillText(title, 24, 38, width - 48);
+  ctx.font = "700 36px sans-serif";
+  ctx.fillText(fittedText(ctx, title, width - 48), 24, 46);
   ctx.fillStyle = "#45474c";
-  ctx.fillRect(24, 56, width - 48, 2);
+  ctx.fillRect(24, 66, width - 48, 2);
   const icon = currencyIconUrl ? await cachedImage(currencyIconUrl) : null;
   const assets = await Promise.all(rows.map(async row => ({
     avatar: row.avatarUrl ? await cachedImage(row.avatarUrl) : null,
@@ -238,26 +245,25 @@ export async function renderLeaderboardCard(title: string, rows: LeaderboardRow[
     }
     ctx.restore();
     ctx.fillStyle = "#f2f3f5";
-    ctx.font = "700 24px sans-serif";
-    ctx.fillText(`#${row.rank}`, 210, y + 59);
+    ctx.font = "700 34px sans-serif";
+    ctx.fillText(`#${row.rank}`, 40, y + 73);
     ctx.save();
     ctx.beginPath();
-    ctx.arc(326, y + 50, 32, 0, Math.PI * 2);
+    ctx.arc(166, y + 60, 36, 0, Math.PI * 2);
     ctx.clip();
     ctx.fillStyle = "#45474c";
-    ctx.fillRect(294, y + 18, 64, 64);
-    if (avatar) ctx.drawImage(avatar, 294, y + 18, 64, 64);
+    ctx.fillRect(130, y + 24, 72, 72);
+    if (avatar) ctx.drawImage(avatar, 130, y + 24, 72, 72);
     ctx.restore();
-    if (decoration) ctx.drawImage(decoration, 286, y + 10, 80, 80);
-    ctx.font = "500 23px sans-serif";
-    let username = row.username;
-    while (username.length && ctx.measureText(username).width > 345) username = username.slice(0, -1);
-    ctx.fillText(username === row.username ? username : `${username.slice(0, -1)}…`, 378, y + 58);
-    ctx.font = "700 22px sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText(row.value, 992, y + 58, 235);
-    if (icon) ctx.drawImage(icon, 1004, y + 34, 28, 28);
-    ctx.textAlign = "left";
+    if (decoration) ctx.drawImage(decoration, 121, y + 15, 90, 90);
+    ctx.font = "600 36px sans-serif";
+    ctx.shadowColor = "#000000";
+    ctx.shadowBlur = 6;
+    ctx.fillText(fittedText(ctx, row.username, 630), 230, y + 49);
+    ctx.font = "700 32px sans-serif";
+    if (icon) ctx.drawImage(icon, 230, y + 68, 32, 32);
+    ctx.fillText(fittedText(ctx, row.value, icon ? 586 : 630), icon ? 274 : 230, y + 96);
+    ctx.shadowBlur = 0;
     ctx.fillStyle = "#45474c";
     ctx.fillRect(16, y + rowHeight + 6, width - 32, 1);
   });
