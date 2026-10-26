@@ -1,3 +1,4 @@
+import { sendLog } from "./log-webhooks.js";
 import { systemAvailable } from "./premium.js";
 import { AttachmentBuilder } from "discord.js";
 import { renderLeaderboardCard } from "./level-card.js";
@@ -280,7 +281,7 @@ async function audit(interaction: EconomyInteraction, title: string, text: strin
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(text))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`<t:${Math.floor(Date.now() / 1000)}:f>`));
-  await channel.send({ components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } }).catch(console.error);
+  await sendLog(interaction.guild!, channel, "economy", { components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } }).catch(console.error);
 }
 async function auditPurchase(interaction: EconomyInteraction, item: ShopItem, paid: string) {
   const id = settingsFor(interaction.guildId!).money_audit_channel_id;
@@ -294,7 +295,7 @@ async function auditPurchase(interaction: EconomyInteraction, item: ShopItem, pa
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${interaction.user.username}** bought ${itemIcon(item.emoji_id, interaction)} **${item.name}** for **${paid}**.`))
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`<t:${Math.floor(Date.now() / 1000)}:f>`));
-  await channel.send({ components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } }).catch(console.error);
+  await sendLog(interaction.guild!, channel, "economy", { components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } }).catch(console.error);
 }
 
 async function purchaseItem(interaction: EconomyInteraction, itemId: number, groupIndex: number) {

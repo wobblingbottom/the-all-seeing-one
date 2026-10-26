@@ -1,4 +1,5 @@
-﻿import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, StringSelectMenuBuilder, StringSelectMenuInteraction, ChatInputCommandInteraction, ModalSubmitInteraction, ModalBuilder, LabelBuilder, UserSelectMenuBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, ContainerBuilder, SeparatorBuilder, MessageFlags, PermissionFlagsBits as P, SlashCommandBuilder, TextDisplayBuilder } from "discord.js";
+import { sendLog } from "./log-webhooks.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, StringSelectMenuBuilder, StringSelectMenuInteraction, ChatInputCommandInteraction, ModalSubmitInteraction, ModalBuilder, LabelBuilder, UserSelectMenuBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, ContainerBuilder, SeparatorBuilder, MessageFlags, PermissionFlagsBits as P, SlashCommandBuilder, TextDisplayBuilder } from "discord.js";
 import { db } from "./db.js";
 
 db.exec(`CREATE TABLE IF NOT EXISTS moderation_settings (guild_id TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1, log_channel_id TEXT);
@@ -75,7 +76,7 @@ export async function handleHoneypotMessage(message: import("discord.js").Messag
     try {
       const channel = await guild.channels.fetch(settings.log_channel_id);
       if (!channel?.isSendable()) throw new Error("Moderation log channel unavailable");
-      await channel.send({ embeds: [new EmbedBuilder().setColor(0xf45f77).setDescription(
+      await sendLog(guild, channel, "moderation", { embeds: [new EmbedBuilder().setColor(0x77f45f).setDescription(
         `${outcome}: ${message.author.username}\nMod: ${message.client.user?.username || "Bot"}\nReason: Honeypot channel message\n${message.url}${failure ? `\n${failure}` : ""}`
       )], allowedMentions: { parse: [] } });
     } catch (error) { console.error("Honeypot log failed", error); }
@@ -376,9 +377,9 @@ export async function handleModerationCommand(interaction: ChatInputCommandInter
         const logLabels: Record<string, string> = { warn: "Warn", timeout: "Timeout", kick: "Kick", ban: "Ban", unban: "Unban", untimeout: "Timeout removed", clearwarnings: "Case cleared", purge: "Purge" };
         const logReason = action === "clearwarnings" ? `Case #${warningCaseId}: ${clearedWarningReason}` : reason;
         const logDetails = [escalationStatus.includes("Automatic") ? escalationStatus.replace(/^Active warnings: \d+\.\s*/, "") : "", dmStatus].filter(Boolean).join("\n");
-        const embed = new EmbedBuilder().setColor(0xf45f77)
+        const embed = new EmbedBuilder().setColor(0x77f45f)
           .setDescription(`${logLabels[action] || action}: ${memberName}\nMod: ${actor.user.username}${action === "timeout" ? `\nLength: ${minutes} min` : ""}\nReason: ${logReason}${action === "purge" ? `\n${result}` : ""}${linksText}${logDetails ? `\n${logDetails}` : ""}`);
-        await channel.send({ embeds: [embed], allowedMentions: { parse: [] } });
+        await sendLog(guild, channel, "moderation", { embeds: [embed], allowedMentions: { parse: [] } });
         logStatus = "";
       } catch (error) {
         console.error("Moderation log failed", error);

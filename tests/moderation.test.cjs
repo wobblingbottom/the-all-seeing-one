@@ -69,7 +69,7 @@ test('honeypot validation accepts text and announcement channels and refreshes p
 const source = ts.transpileModule(fs.readFileSync('src/moderation.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 function setup() {
   const db = new DatabaseSync(':memory:');
-  const context = { exports: {}, require: name => name === 'discord.js' ? discord : { db }, URL, console: { error() {} } };
+  const context = { exports: {}, require: name => name === 'discord.js' ? discord : name === './log-webhooks.js' ? { sendLog: (_guild, channel, _kind, payload) => channel.send(payload) } : { db }, URL, console: { error() {} } };
   vm.createContext(context); vm.runInContext(source, context);
   const events = [], responses = [];
   let actorAllowed = true, botAllowed = true, dmFails = false, targetError = null, higherRole = false;

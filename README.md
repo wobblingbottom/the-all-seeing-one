@@ -69,3 +69,7 @@ Register an HTTPS webhook at /api/paypal/webhook on your public domain. Subscrib
 Set DISCORD_REDIRECT_URI to the public site's exact OAuth callback URL; its origin is used for checkout redirects and request validation. Keep one app replica (SQLite and in-process subscription locks).
 
 Before enabling live checkout, test sandbox approval, retry after a failed return, renewal, cancellation, suspension, and webhook delivery with a sandbox buyer. Automated mocked tests do not verify real PayPal account setup.
+
+### Separate log identities
+
+In the dashboard, open Moderation settings or Economy balance settings to enable a separate log identity, set its name and HTTPS avatar image URL, and click Save log identity. Each identity applies to that server and uses its existing log channel. Leave the avatar blank to use the supplied green Modlogs image for moderation or the bot avatar for economy. Moderation log embeds use #77F45F. The bot needs Manage Webhooks in the log channel and creates or reuses its own webhook automatically. If webhook delivery fails, it tries sending the log as the bot and records the failure in the console. Identities are disabled by default.

@@ -1,3 +1,4 @@
+import { logIdentity } from "./log-webhooks.js";
 import crypto from "node:crypto";
 import path from "node:path";
 import express, { NextFunction, Request, Response } from "express";
@@ -117,6 +118,23 @@ app.post("/api/guilds/:guildId/premium/activate", requireUser, canManage, paymen
 app.post("/api/paypal/webhook", async (req, res) => {
   try { await handlePayPalWebhook(req.headers, req.body); res.sendStatus(204); }
   catch { res.status(400).json({ error: "Webhook could not be verified" }); }
+});
+
+app.get("/api/guilds/:guildId/log-identities", requireUser, canManage, (req, res) => {
+  const id = String(req.params.guildId);
+  res.json({ moderation: logIdentity(id, "moderation"), economy: logIdentity(id, "economy") });
+});
+app.put("/api/guilds/:guildId/log-identities/:kind", requireUser, canManage, (req, res) => {
+  const kind = String(req.params.kind);
+  if (kind !== "moderation" && kind !== "economy") return res.sendStatus(404);
+  const name = String(req.body.name || "").trim(), avatar = String(req.body.avatar_url || "").trim();
+  if (typeof req.body.enabled !== "boolean" || name.length < 1 || name.length > 80 || /discord|clyde/i.test(name)) return res.status(400).json({ error: "Use a name of 1-80 characters without Discord or Clyde." });
+  if (avatar) {
+    try { const url = new URL(avatar); if (url.protocol !== "https:" || url.username || url.password || avatar.length > 2048) throw Error(); }
+    catch { return res.status(400).json({ error: "Use an HTTPS image URL for the avatar." }); }
+  }
+  db.prepare("INSERT INTO log_identities (guild_id,kind,enabled,name,avatar_url) VALUES (?,?,?,?,?) ON CONFLICT(guild_id,kind) DO UPDATE SET enabled=excluded.enabled,name=excluded.name,avatar_url=excluded.avatar_url").run(String(req.params.guildId), kind, req.body.enabled ? 1 : 0, name, avatar);
+  res.json(logIdentity(String(req.params.guildId), kind));
 });
 
 app.get("/api/guilds/:guildId/moderation", requireUser, canManage, (req, res) => {
