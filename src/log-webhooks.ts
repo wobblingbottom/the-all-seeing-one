@@ -6,7 +6,7 @@ export type LogKind = "moderation" | "economy";
 db.exec("CREATE TABLE IF NOT EXISTS log_identities (guild_id TEXT NOT NULL, kind TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 0, name TEXT NOT NULL, avatar_url TEXT NOT NULL DEFAULT '', PRIMARY KEY(guild_id,kind))");
 export function logIdentity(guildId: string, kind: LogKind) {
   return (db.prepare("SELECT enabled,name,avatar_url FROM log_identities WHERE guild_id=? AND kind=?").get(guildId, kind) as { enabled: number; name: string; avatar_url: string } | undefined)
-    || { enabled: 0, name: kind === "moderation" ? "Crazyland Moderation" : "Crazyland Economy", avatar_url: "" };
+    || { enabled: kind === "moderation" ? 1 : 0, name: kind === "moderation" ? "Crazyland Moderation" : "Crazyland Economy", avatar_url: "" };
 }
 const moderationAvatar = readFileSync("public/assets/modlogs.png");
 const avatarApplied = new Set<string>();

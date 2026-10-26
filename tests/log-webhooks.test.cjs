@@ -45,3 +45,10 @@ test('moderation uses the supplied image as the webhook avatar', async () => {
   assert.deepEqual(edited.avatar,fs.readFileSync('public/assets/modlogs.png'));
   assert.equal(sent.avatarURL,undefined);
 });
+
+test('moderation defaults to webhook delivery while saved choices take precedence', () => {
+  const api=harness(undefined);
+  assert.equal(api.logIdentity('guild','moderation').enabled,1);
+  assert.equal(api.logIdentity('guild','economy').enabled,0);
+  assert.equal(harness({enabled:0,name:'Disabled',avatar_url:''}).logIdentity('guild','moderation').enabled,0);
+});
