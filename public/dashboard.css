@@ -2296,3 +2296,16 @@ select[data-economy-key="bonusRole"] {
   .shop-filters label { min-width: 0; flex-basis: 100%; }
   .save-state { right: 12px; left: 12px; bottom: calc(88px + env(safe-area-inset-bottom)); }
 }
+
+/* Public feedback stays at the foot of the navigation. */
+.sidebar .report-bug-link { margin-top: auto; padding: 16px 14px; color: var(--discord-muted); font-size: 14px; font-weight: 600; }
+.sidebar .report-bug-link:hover { background: var(--discord-hover); color: var(--discord-text); }
+.sidebar .report-bug-link:focus-visible { outline: 2px solid var(--discord-accent); outline-offset: -2px; }
+.sidebar .report-bug-link + .profile { margin-top: 0; }
+@media (max-width: 750px) { .sidebar .report-bug-link { margin: 0 0 0 auto; padding: 10px; white-space: nowrap; } }
+
+#server-rail-profile { position: relative; overflow: hidden; border-radius: 50%; }
+#server-rail-profile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--discord-surface); }
+
+#server-rail-profile:hover { filter: brightness(1.12); }
+#server-rail-profile:focus-visible { outline: 2px solid var(--discord-accent); outline-offset: 3px; }

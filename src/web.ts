@@ -9,6 +9,7 @@ import { bot } from "./bot.js";
 import { config } from "./config.js";
 import { db, ensureDefaultEconomySystem, ensureDefaultSystem, settingsFor, xpForLevel } from "./db.js";
 import "./types.js";
+import { feedbackStore } from "./feedback.js";
 import { premiumStatus, createPremiumSubscription, activatePremiumSubscription, handlePayPalWebhook, startPremiumSync } from "./premium.js";
 
 import { moderationSettings, moderationCases, validateWarningRules } from "./moderation.js";
@@ -81,6 +82,22 @@ app.get("/auth/discord/callback", async (req, res) => {
 });
 
 app.post("/auth/logout", (req, res) => { if (req.session?.user) guildCache.delete(req.session.user.id); req.session = null; res.status(204).end(); });
+const feedback = feedbackStore(db);
+app.get("/api/feedback", (req, res) => {
+  const page = Number(req.query.page || 1);
+  if (!Number.isSafeInteger(page) || page < 1) return res.status(400).json({ error: "Invalid page" });
+  res.json(feedback.list(page));
+});
+app.post("/api/feedback", requireUser, (req, res) => {
+  if (req.headers.origin !== new URL(config.redirectUri).origin || !req.is("application/json")) return res.status(403).json({ error: "Invalid request" });
+  try { res.status(201).json(feedback.create(req.session!.user!, req.body)); }
+  catch (error) {
+    const message = error instanceof Error ? error.message : "Could not submit feedback.";
+    if (message.startsWith("Please wait")) return res.status(429).json({ error: message });
+    if (/^(Choose |Enter )/.test(message)) return res.status(400).json({ error: message });
+    res.status(500).json({ error: "Could not submit feedback. Please try again." });
+  }
+});
 app.get("/api/meta", (_req, res) => res.json({ clientId: config.clientId }));
 app.get("/api/me", requireUser, (req, res) => res.json({ id: req.session!.user!.id, username: req.session!.user!.username, avatar: req.session!.user!.avatar }));
 

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Report Bug - Crazyland</title>
+  <link rel="stylesheet" href="/feedback.css">
+  <script src="/feedback.js" defer></script>
+</head>
+<body>
+  <header><a href="/">Crazyland</a><a href="/dashboard.html">Back to dashboard</a></header>
+  <main>
+    <h1>Bug reports &amp; suggestions</h1>
+    <p>Found a problem or have an idea? Share it with the community.</p>
+    <section class="card" aria-labelledby="submit-heading">
+      <h2 id="submit-heading">Submit feedback</h2>
+      <p>Submissions and your Discord username are visible to everyone. Do not include passwords, tokens, or private information.</p>
+      <p id="sign-in" hidden><a class="button" href="/auth/discord">Sign in with Discord to submit</a></p>
+      <form id="feedback-form" hidden>
+        <label>Type<select name="type"><option value="bug">Bug report</option><option value="suggestion">Suggestion</option></select></label>
+        <label>Title<input name="title" required maxlength="120" placeholder="A short summary"></label>
+        <label>Details<textarea name="description" required maxlength="4000" rows="5" placeholder="Describe what happened and what you expected, or explain your idea."></textarea></label>
+        <button class="button" type="submit">Submit feedback</button>
+      </form>
+      <p id="submit-status" role="status"></p>
+    </section>
+    <section aria-labelledby="community-heading">
+      <div class="board-heading"><h2 id="community-heading">Community feedback</h2><button id="refresh" type="button">Refresh</button></div>
+      <p id="board-status" role="status">Loading feedback...</p>
+      <div id="feedback-list"></div>
+      <nav aria-label="Feedback pages"><button id="previous" disabled>Previous</button><span id="page"></span><button id="next" disabled>Next</button></nav>
+    </section>
+  </main>
+</body>
+</html>
