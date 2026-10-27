@@ -6,7 +6,7 @@ const ts = require('typescript');
 const source = ts.transpileModule(fs.readFileSync('src/log-webhooks.ts','utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 function harness(identity) {
   const db = { exec() {}, prepare() { return { get() { return identity; } }; } };
-  const context = { exports: {}, require: name => name === 'node:fs' ? fs : ({ db }), console: { error() {} } };
+  const context = { exports: {}, require: name => name === 'node:fs' ? fs : name === 'discord.js' ? require('discord.js') : ({ db }), console: { error() {} } };
   vm.runInNewContext(source, context);
   return context.exports;
 }
@@ -51,4 +51,12 @@ test('moderation defaults to webhook delivery while saved choices take precedenc
   assert.equal(api.logIdentity('guild','moderation').enabled,1);
   assert.equal(api.logIdentity('guild','economy').enabled,0);
   assert.equal(harness({enabled:0,name:'Disabled',avatar_url:''}).logIdentity('guild','moderation').enabled,0);
+});
+
+test('webhook setup reports missing channel permissions before creating a webhook', async () => {
+  const api=harness(undefined);let created=false;
+  const guild={members:{fetchMe:async()=>({})}};
+  const channel={fetchWebhooks:async()=>[],createWebhook:async()=>{created=true;},permissionsFor:()=>({has:()=>false})};
+  await assert.rejects(api.ensureLogWebhook(guild,channel,'moderation'), /View Channel and Manage Webhooks/);
+  assert.equal(created,false);
 });

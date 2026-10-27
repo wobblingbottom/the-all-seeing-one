@@ -1,4 +1,4 @@
-import { logIdentity } from "./log-webhooks.js";
+import { ensureLogWebhook, logIdentity } from "./log-webhooks.js";
 import crypto from "node:crypto";
 import path from "node:path";
 import express, { NextFunction, Request, Response } from "express";
@@ -124,7 +124,7 @@ app.get("/api/guilds/:guildId/log-identities", requireUser, canManage, (req, res
   const id = String(req.params.guildId);
   res.json({ moderation: logIdentity(id, "moderation"), economy: logIdentity(id, "economy") });
 });
-app.put("/api/guilds/:guildId/log-identities/:kind", requireUser, canManage, (req, res) => {
+app.put("/api/guilds/:guildId/log-identities/:kind", requireUser, canManage, async (req, res) => {
   const kind = String(req.params.kind);
   if (kind !== "moderation" && kind !== "economy") return res.sendStatus(404);
   const name = String(req.body.name || "").trim(), avatar = String(req.body.avatar_url || "").trim();
@@ -132,6 +132,18 @@ app.put("/api/guilds/:guildId/log-identities/:kind", requireUser, canManage, (re
   if (avatar) {
     try { const url = new URL(avatar); if (url.protocol !== "https:" || url.username || url.password || avatar.length > 2048) throw Error(); }
     catch { return res.status(400).json({ error: "Use an HTTPS image URL for the avatar." }); }
+  }
+  if (req.body.enabled) {
+    const guild = bot.guilds.cache.get(String(req.params.guildId))!;
+    const channelId = kind === "moderation" ? moderationSettings(guild.id).log_channel_id : settingsFor(guild.id).money_audit_channel_id;
+    if (!channelId) return res.status(400).json({ error: "Choose and save a log channel first." });
+    try {
+      const channel = await guild.channels.fetch(channelId);
+      if (!channel?.isSendable()) throw new Error();
+      await ensureLogWebhook(guild, channel, kind);
+    } catch {
+      return res.status(400).json({ error: "Could not set up the webhook. The bot needs View Channel and Manage Webhooks in a text or announcement log channel." });
+    }
   }
   db.prepare("INSERT INTO log_identities (guild_id,kind,enabled,name,avatar_url) VALUES (?,?,?,?,?) ON CONFLICT(guild_id,kind) DO UPDATE SET enabled=excluded.enabled,name=excluded.name,avatar_url=excluded.avatar_url").run(String(req.params.guildId), kind, req.body.enabled ? 1 : 0, name, avatar);
   res.json(logIdentity(String(req.params.guildId), kind));
@@ -197,6 +209,10 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
           return res.status(400).json({ error: "Could not post the honeypot warning. Check the bot's channel permissions and try again." });
         }
       }
+    }
+    if (channelId && logIdentity(guild.id, "moderation").enabled) {
+      try { await ensureLogWebhook(guild, await guild.channels.fetch(channelId), "moderation"); }
+      catch { return res.status(400).json({ error: "Could not set up the moderation webhook. The bot needs Manage Webhooks in the log channel." }); }
     }
     moderationSettings(guild.id);
     db.prepare("UPDATE moderation_settings SET enabled=?,log_channel_id=?,warning_rules=?,admin_role_id=?,moderator_role_id=?,honeypot_channel_id=? WHERE guild_id=?").run(req.body.enabled ? 1 : 0, channelId || null, JSON.stringify(rules), adminRoleId || null, moderatorRoleId || null, honeypotChannelId || null, guild.id);

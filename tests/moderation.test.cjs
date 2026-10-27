@@ -23,6 +23,7 @@ test('honeypot validation accepts text and announcement channels and refreshes p
     const edits = [];
     const me = { permissions: { has: () => true } };
     const context = {
+      logIdentity: () => ({ enabled: 0 }),
       req: { body: { honeypotChannelId: 'trap' } }, current: { honeypot_channel_id: extra.unchanged ? 'trap' : null }, channelId: 'log',
       ChannelType: discord.ChannelType, PermissionFlagsBits: discord.PermissionFlagsBits,
       ContainerBuilder: discord.ContainerBuilder, TextDisplayBuilder: discord.TextDisplayBuilder,

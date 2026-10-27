@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { type Guild, type MessageCreateOptions, type WebhookMessageCreateOptions } from "discord.js";
+import { PermissionFlagsBits, type Guild, type MessageCreateOptions, type WebhookMessageCreateOptions } from "discord.js";
 import { db } from "./db.js";
 
 export type LogKind = "moderation" | "economy";
@@ -11,11 +11,12 @@ export function logIdentity(guildId: string, kind: LogKind) {
 const moderationAvatar = readFileSync("public/assets/modlogs.png");
 const avatarApplied = new Set<string>();
 const pending = new Map<string, Promise<any>>();
-export async function sendLog(guild: Guild, channel: any, kind: LogKind, payload: MessageCreateOptions) {
-  const identity = logIdentity(guild.id, kind);
-  if (!identity.enabled) return channel.send(payload);
-  try {
+export async function ensureLogWebhook(guild: Guild, channel: any, kind: LogKind) {
     if (!channel.fetchWebhooks || !channel.createWebhook) throw new Error("This log channel does not support webhooks");
+    if (channel.permissionsFor) {
+      const me = await guild.members.fetchMe();
+      if (!channel.permissionsFor(me)?.has([PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageWebhooks])) throw new Error("The bot needs View Channel and Manage Webhooks in the log channel.");
+    }
     const key = channel.id + ":" + kind;
     let lookup = pending.get(key);
     if (!lookup) {
@@ -31,8 +32,13 @@ export async function sendLog(guild: Guild, channel: any, kind: LogKind, payload
       })();
       pending.set(key, lookup);
     }
-    let hook;
-    try { hook = await lookup; } finally { if (pending.get(key) === lookup) pending.delete(key); }
+    try { return await lookup; } finally { if (pending.get(key) === lookup) pending.delete(key); }
+}
+export async function sendLog(guild: Guild, channel: any, kind: LogKind, payload: MessageCreateOptions) {
+  const identity = logIdentity(guild.id, kind);
+  if (!identity.enabled) return channel.send(payload);
+  try {
+    const hook = await ensureLogWebhook(guild, channel, kind);
     return await hook.send({ ...payload, withComponents: true, username: identity.name, avatarURL: identity.avatar_url || (kind === "moderation" ? undefined : guild.client.user.displayAvatarURL()), allowedMentions: { parse: [] } } as WebhookMessageCreateOptions);
   } catch (error) {
     console.error("Webhook log failed; sending as bot", error);
