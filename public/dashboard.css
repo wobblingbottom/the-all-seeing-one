@@ -2108,7 +2108,9 @@ select[data-economy-key="bonusRole"] {
   transition: background-color .15s ease, color .15s ease;
 }
 .sidebar .tab span { margin-left: 0; }
-.sidebar .tab:hover { background: var(--discord-hover); color: var(--discord-text); }
+@media (hover: hover) {
+  .sidebar .tab:hover { background: var(--discord-hover); color: var(--discord-text); }
+}
 .sidebar .tab.active { background: transparent; color: var(--discord-text); border-bottom-color: var(--discord-accent); }
 .sidebar .tab:focus-visible, .sidebar #logout:focus-visible {
   outline: 2px solid var(--discord-accent);
@@ -2131,7 +2133,26 @@ select[data-economy-key="bonusRole"] {
   .sidebar .brand { min-height: 36px; margin: 0; padding: 0; border: 0; font-size: 17px; }
   .sidebar .logo { width: 30px; height: 30px; }
 .sidebar nav { margin: 0; padding: 8px 12px; gap: 8px; border-top: 1px solid var(--discord-border); background: var(--discord-surface); }
-  .sidebar .tab { justify-content: center; flex: 1; min-width: 0; padding: 9px 5px; gap: 7px; }
+  .sidebar .tab {
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+    padding: 9px 5px;
+    gap: 7px;
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sidebar .tab:not(.active), .sidebar .tab:not(.active):hover {
+    background: transparent;
+    color: var(--discord-muted);
+    border-bottom-color: transparent;
+  }
+  .sidebar .tab.active, .sidebar .tab.active:hover {
+    background: transparent;
+    color: var(--discord-text);
+    border-bottom-color: var(--discord-accent);
+  }
   .sidebar .profile { margin: 0; padding: 0; border: 0; }
   .sidebar .profile small, .sidebar #logout { display: none; }
 }
@@ -2214,8 +2235,28 @@ select[data-economy-key="bonusRole"] {
   .cardhead > .switch { flex-shrink: 0; }
   .system-toolbar { flex-wrap: wrap; }
   .system-toolbar label { flex: 1 1 100%; max-width: none; }
-  .level-tabs { overflow-x: auto; }
-  .level-tab { flex-shrink: 0; white-space: nowrap; }
+  .level-tabs {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 12px;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--discord-accent) var(--discord-input);
+    -webkit-overflow-scrolling: touch;
+  }
+  .level-tabs::-webkit-scrollbar { height: 4px; }
+  .level-tabs::-webkit-scrollbar-track { background: var(--discord-input); }
+  .level-tabs::-webkit-scrollbar-thumb { background: var(--discord-accent); border-radius: 4px; }
+  .level-tab {
+    flex: 0 0 auto;
+    min-height: 48px;
+    padding-inline: 16px;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
 
   .filter-row.channel-filter-row { grid-template-columns: 110px minmax(0, 1fr); }
   .filter-row.channel-filter-row > :last-child { grid-column: 1 / -1; }
