@@ -2102,3 +2102,24 @@ select[data-economy-key="bonusRole"] {
 .warning-escalation{margin-top:24px;padding-top:20px;border-top:1px solid var(--discord-border)}.warning-escalation p{color:var(--discord-muted);line-height:1.6}.warning-rule-row{display:flex;gap:14px;align-items:end;flex-wrap:wrap;margin-bottom:16px}.warning-rule-row label{flex:1;min-width:130px}.warning-rule-row input,.warning-rule-row select{width:100%}.warning-rule-remove{margin-bottom:0}#add-warning-rule{margin-top:8px}
 
 .premium-panel{display:flex;align-items:center;gap:16px;padding:16px;margin-bottom:20px;border:1px solid #41414b;border-radius:12px}.premium-panel p{margin:6px 0;color:#aaa}.premium-panel>div{flex:1}.premium-panel.hidden{display:none}
+
+
+.log-identity {
+  grid-column: 1 / -1;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--discord-border);
+  min-width: 0;
+}
+.log-identity .cardhead { align-items: center; gap: 16px; }
+.log-identity h3 { margin: 0; font-size: 14px; }
+.log-identity .cardhead p { margin: 6px 0 0; }
+.log-identity .switch { flex-shrink: 0; }
+.log-identity .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.log-identity .form-grid > label { min-width: 0; }
+.log-identity input:not([type="checkbox"]) { text-transform: none; letter-spacing: normal; }
+.log-identity .log-identity-note { margin: 16px 0; font-size: 12px; line-height: 1.5; }
+.log-identity-actions { display: flex; justify-content: flex-end; }
+@media (max-width: 700px) {
+  .log-identity .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
