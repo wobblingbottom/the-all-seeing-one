@@ -175,7 +175,7 @@ test('pagination acknowledgements, empty history, and modal opening without memb
 
 test('configured admin and moderator roles grant only their intended actions', async () => {
   const h=setup();h.setActor(false);
-  h.db.prepare('UPDATE moderation_settings SET admin_role_id=?,moderator_role_id=?').run('admin-role','mod-role');
+  h.db.prepare('UPDATE moderation_settings SET admin_role_id=?,moderator_role_id=?').run('first-admin,admin-role','first-mod,mod-role');
   const moderator=h.interaction('warn',{},'command');moderator.member={roles:['mod-role']};
   await h.api.handleModerationCommand(moderator);assert(h.events.some(e=>e[0]==='modal'));
   const ban=h.interaction('ban',{},'command');ban.member={roles:['mod-role']};

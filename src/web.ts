@@ -129,9 +129,9 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
     const guild = bot.guilds.cache.get(String(req.params.guildId))!;
     const channelId = String(req.body.logChannelId || "");
     const current = moderationSettings(guild.id);
-    const adminRoleId = String(req.body.adminRoleId ?? current.admin_role_id ?? "");
-    const moderatorRoleId = String(req.body.moderatorRoleId ?? current.moderator_role_id ?? "");
-    for (const id of [adminRoleId, moderatorRoleId]) {
+    const adminRoleId = [...new Set(String(req.body.adminRoleId ?? current.admin_role_id ?? "").split(",").map(id => id.trim()).filter(Boolean))].join(",");
+    const moderatorRoleId = [...new Set(String(req.body.moderatorRoleId ?? current.moderator_role_id ?? "").split(",").map(id => id.trim()).filter(Boolean))].join(",");
+    for (const id of [adminRoleId, moderatorRoleId].flatMap(ids => ids.split(","))) {
       if (!id) continue;
       const role = guild.roles.cache.get(id);
       if (!role || role.id === guild.id || role.managed) return res.status(400).json({ error: "Choose an available server role" });

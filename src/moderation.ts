@@ -48,7 +48,7 @@ export async function handleHoneypotMessage(message: import("discord.js").Messag
   try {
     const member = await guild.members.fetch(message.author.id);
     if (member.id === guild.ownerId || member.permissions.has(P.Administrator) || member.permissions.has(P.BanMembers)
-      || [settings.admin_role_id, settings.moderator_role_id].some(id => id && member.roles.cache.has(id))) return false;
+      || [settings.admin_role_id, settings.moderator_role_id].flatMap(ids => (ids || "").split(",")).some(id => id && member.roles.cache.has(id))) return false;
     const me = await guild.members.fetchMe();
     if (!me.permissions.has(P.BanMembers) || !member.bannable) throw new Error("Check bot Ban Members permission and role order.");
     try {
@@ -98,7 +98,7 @@ function canModerate(interaction: ChatInputCommandInteraction | ModalSubmitInter
   const settings = moderationSettings(interaction.guildId!);
   const member = interaction.member;
   const roles = member?.roles;
-  const hasRole = (id: string | null) => !!id && !!roles && (Array.isArray(roles) ? roles.includes(id) : roles.cache.has(id));
+  const hasRole = (ids: string | null) => !!roles && (ids || "").split(",").some(id => !!id && (Array.isArray(roles) ? roles.includes(id) : roles.cache.has(id)));
   return hasRole(settings.admin_role_id) || (!["ban", "unban"].includes(action) && hasRole(settings.moderator_role_id));
 }
 

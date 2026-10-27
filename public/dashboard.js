@@ -53,9 +53,11 @@ function showSection(section){
   $('#economy-tabs').classList.toggle('hidden',!economy);
   $('#moderation-tabs').classList.toggle('hidden',section!=='moderation');
   $('#system-toolbar').classList.toggle('hidden',!levels);
+  $('#economy-system-toolbar')?.classList.toggle('hidden',!economy);
   document.querySelectorAll('.panel').forEach(panel=>panel.classList.add('hidden'));
   if(economy){renderEconomy();renderEconomyRules();renderShopItems();$('#economy').classList.remove('hidden');showEconomyPage(document.querySelector('.economy-child.active')?.dataset.economyPage||'general')}
   else if(levels)showTab(document.querySelector('#level-tabs .level-tab.active')?.dataset.tab||'overview');
+  else if(section==='premium'){$('#premium').classList.remove('hidden');$('#title').textContent='Premium';$('#crumb').textContent='DASHBOARD / PREMIUM';renderPremium()}
   else if(section==='moderation'){$('#moderation').classList.remove('hidden');showModerationPage(document.querySelector('.moderation-child.active')?.dataset.moderationPage||'overview');loadModeration()}
 }
 document.querySelectorAll('.tab').forEach(button=>button.onclick=()=>showSection(button.dataset.section));
@@ -214,13 +216,15 @@ function openSelectPopup(select){
   const isContentType=select.id==='content-type'||select.id==='economy-content-type';
   const isEconomyContentType=select.id==='economy-content-type';
   const isBonusRole=select.dataset.economyKey==='bonusRole';
-  const isSearchable=select.id==='money-audit-channel'||isBonusRole;
+  const isModerationRole=['moderation-admin-role','moderation-moderator-role'].includes(select.id);
+  const isRoleMulti=isBonusRole||isModerationRole;
+  const isSearchable=select.id==='money-audit-channel'||isRoleMulti;
   const system=isContentType&&!isEconomyContentType&&state.data?.systems.find(item=>item.id===state.systemId);
   const storedValue=isEconomyContentType?state.data?.economy?.config?.messageContentFilter||'any':isContentType?system?.content_filter||system?.content_type||'any':isBonusRole?state.data?.economy?.config?.bonusRole||select.value:select.value;
   const selectedValues=new Set(String(storedValue||'').split(',').filter(Boolean));
-  if(isContentType||isBonusRole)menu.setAttribute('aria-multiselectable','true');
-  if(isSearchable)addSelectPopupTools(menu,isBonusRole?()=>{selectedValues.clear();state.data.economy.config.bonusRole='';syncBonusRoleSelect();select.dispatchEvent(new Event('change',{bubbles:true}));menu.querySelectorAll('.select-popup-option').forEach(item=>{item.classList.remove('selected');item.setAttribute('aria-selected','false')})}:null);
-  const popupOptions=[...select.options].filter(option=>!option.dataset.summary&&!(isBonusRole&&option.value===''));
+  if(isContentType||isRoleMulti)menu.setAttribute('aria-multiselectable','true');
+  if(isSearchable)addSelectPopupTools(menu,isRoleMulti?()=>{selectedValues.clear();if(isBonusRole)state.data.economy.config.bonusRole='';syncBonusRoleSelect(select,'');select.dispatchEvent(new Event('change',{bubbles:true}));menu.querySelectorAll('.select-popup-option').forEach(item=>{item.classList.remove('selected');item.setAttribute('aria-selected','false')})}:null);
+  const popupOptions=[...select.options].filter(option=>!option.dataset.summary&&!(isRoleMulti&&option.value===''));
   let lastSelectedIndex=null;
   popupOptions.forEach((option,optionIndex)=>{
     const item=document.createElement('button');
@@ -257,12 +261,13 @@ function openSelectPopup(select){
         else refreshLevelContentPopupRewards();
         return;
       }
-      if(isBonusRole){
+      if(isRoleMulti){
         const shouldSelect=!selectedValues.has(option.value);
         selectionRange(popupOptions.length,optionIndex,lastSelectedIndex,event.shiftKey).forEach(index=>selectedValues[shouldSelect?'add':'delete'](popupOptions[index].value));
         lastSelectedIndex=optionIndex;
-        state.data.economy.config.bonusRole=[...selectedValues].join(',');
-        syncBonusRoleSelect();
+        const value=[...selectedValues].join(',');
+        if(isBonusRole)state.data.economy.config.bonusRole=value;
+        syncBonusRoleSelect(select,value);
         select.dispatchEvent(new Event('change',{bubbles:true}));
         menu.querySelectorAll('.select-popup-option').forEach(button=>{const selected=selectedValues.has(button.dataset.value);button.classList.toggle('selected',selected);button.setAttribute('aria-selected',String(selected))});
         return;
@@ -326,11 +331,10 @@ $('#money-audit-channel').options[0].textContent='None';
 document.querySelector('[data-economy-key="bonusRole"]').parentElement.firstChild.textContent='Bonus roles';
 const renderEconomyWithNone=renderEconomy;
 renderEconomy=()=>{renderEconomyWithNone();const option=$('#money-audit-channel').options[0];if(option)option.textContent='None';syncBonusRoleSelect();syncEconomyContentTypeSelect()};
-function syncBonusRoleSelect(){
-  const select=document.querySelector('[data-economy-key="bonusRole"]');
-  if(!select||!state.data?.economy)return;
+function syncBonusRoleSelect(select=document.querySelector('[data-economy-key="bonusRole"]'),raw=state.data?.economy?.config?.bonusRole||''){
+  if(!select)return;
   select.querySelector('[data-summary]')?.remove();
-  const values=String(state.data.economy.config?.bonusRole||'').split(',').filter(Boolean),labels=values.map(value=>[...select.options].find(option=>option.value===value)?.textContent).filter(Boolean);
+  const values=String(raw).split(',').filter(Boolean),labels=values.map(value=>[...select.options].find(option=>option.value===value)?.textContent).filter(Boolean);
   if(!values.length)select.value='';
   else if(values.length===1)select.value=values[0];
   else{const summary=new Option(labels.join(', '),values.join(','),true,true);summary.dataset.summary='true';select.add(summary)}
@@ -666,7 +670,7 @@ $('#warning-rules').addEventListener('change',scheduleModerationSave);
 function renderModeration(data){
   
   for(const [selector,key] of [['#moderation-admin-role','admin_role_id'],['#moderation-moderator-role','moderator_role_id']]){
-    const select=$(selector);select.innerHTML='<option value="">Not set</option>'+state.data.roles.map(role=>`<option value="${role.id}">@ ${escapeHtml(role.name)}</option>`).join('');select.value=data.settings[key]||'';
+    const select=$(selector);select.innerHTML='<option value="">Not set</option>'+state.data.roles.map(role=>`<option value="${role.id}">@ ${escapeHtml(role.name)}</option>`).join('');syncBonusRoleSelect(select,data.settings[key]||'');
   }
   $('#moderation-enabled').checked=!!data.settings.enabled;
   $('#warning-rules').innerHTML='';let rules=[];try{rules=JSON.parse(data.settings.warning_rules||'[]')}catch{};rules.forEach(addWarningRule);syncWarningRules();
@@ -697,7 +701,7 @@ $('#refresh-moderation').onclick=loadModeration;
 const premiumPanel=document.createElement('section');
 premiumPanel.className='premium-panel hidden';
 premiumPanel.innerHTML='<div><b id="premium-label">Server premium</b><p id="premium-details"></p></div><button id="buy-premium" class="outline" type="button">Buy with PayPal</button><a id="manage-premium" class="outline hidden" href="https://www.paypal.com/" target="_blank" rel="noopener noreferrer">Manage in PayPal</a><button id="retry-premium" class="outline hidden" type="button">Verify subscription</button>';
-$('.dash header').after(premiumPanel);
+$('#premium').append(premiumPanel);
 function renderPremium(){
   const premium=state.data?.premium;if(!premium)return;
   premiumPanel.classList.remove('hidden');
@@ -715,6 +719,7 @@ $('#buy-premium').onclick=async()=>{
 };
 async function finishPremiumCheckout(){
   const query=new URLSearchParams(location.search);
+  if(query.has('premium'))showSection('premium');
   if(query.get('premium')==='cancel'){history.replaceState({},'',location.pathname);showSaveToast('PayPal checkout cancelled');return}
   if(query.get('premium')!=='return')return;
   const guildId=query.get('guild');if(state.guildId!==guildId)return;

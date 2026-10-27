@@ -487,18 +487,6 @@
   gap: 10px;
 }
 
-.tab .tab-icon {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  object-fit: contain;
-  image-rendering: auto;
-}
-
-.tab .tab-icon + span {
-  margin-left: 0;
-}
-
 #economy > .economy-page {
   display: flex;
   flex-direction: column;
@@ -1369,7 +1357,6 @@ label small {
   transform: scaleX(-1);
 }
 
-.tab-icon,
 .gear-button img,
 .leaderboard-pagination button img {
   --icon-direction: 1;
@@ -2120,11 +2107,9 @@ select[data-economy-key="bonusRole"] {
   font: 600 14px 'DM Sans', sans-serif;
   transition: background-color .15s ease, color .15s ease;
 }
-.sidebar .tab .tab-icon { width: 19px; height: 19px; flex: 0 0 19px; color: var(--discord-faint); }
 .sidebar .tab span { margin-left: 0; }
 .sidebar .tab:hover { background: var(--discord-hover); color: var(--discord-text); }
 .sidebar .tab.active { background: transparent; color: var(--discord-text); border-bottom-color: var(--discord-accent); }
-.sidebar .tab.active .tab-icon { color: var(--discord-text); }
 .sidebar .tab:focus-visible, .sidebar #logout:focus-visible {
   outline: 2px solid var(--discord-accent);
   outline-offset: 2px;
