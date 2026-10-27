@@ -7,7 +7,7 @@ const ts = require('typescript');
 const discord = require('discord.js');
 test('honeypot validation accepts text and announcement channels and refreshes permissions', async () => {
   const web = fs.readFileSync('src/web.ts', 'utf8');
-  const validation = web.slice(web.indexOf('    const honeypotChannelId ='), web.indexOf('    moderationSettings(guild.id);', web.indexOf('    const honeypotChannelId =')));
+  const validation = web.slice(web.indexOf('    const honeypotChannelId ='), web.indexOf('    if (channelId) {', web.indexOf('    const honeypotChannelId =')));
   for (const [type, visible, expected, extra = {}] of [
     [discord.ChannelType.GuildText, true, null],
     [discord.ChannelType.GuildAnnouncement, true, null],
@@ -23,7 +23,6 @@ test('honeypot validation accepts text and announcement channels and refreshes p
     const edits = [];
     const me = { permissions: { has: () => true } };
     const context = {
-      logIdentity: () => ({ enabled: 0 }),
       req: { body: { honeypotChannelId: 'trap' } }, current: { honeypot_channel_id: extra.unchanged ? 'trap' : null }, channelId: 'log',
       ChannelType: discord.ChannelType, PermissionFlagsBits: discord.PermissionFlagsBits,
       ContainerBuilder: discord.ContainerBuilder, TextDisplayBuilder: discord.TextDisplayBuilder,

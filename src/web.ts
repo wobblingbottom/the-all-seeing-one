@@ -1,4 +1,4 @@
-import { ensureLogWebhook, logIdentity } from "./log-webhooks.js";
+import { ensureLogWebhook } from "./log-webhooks.js";
 import crypto from "node:crypto";
 import path from "node:path";
 import express, { NextFunction, Request, Response } from "express";
@@ -120,35 +120,6 @@ app.post("/api/paypal/webhook", async (req, res) => {
   catch { res.status(400).json({ error: "Webhook could not be verified" }); }
 });
 
-app.get("/api/guilds/:guildId/log-identities", requireUser, canManage, (req, res) => {
-  const id = String(req.params.guildId);
-  res.json({ moderation: logIdentity(id, "moderation"), economy: logIdentity(id, "economy") });
-});
-app.put("/api/guilds/:guildId/log-identities/:kind", requireUser, canManage, async (req, res) => {
-  const kind = String(req.params.kind);
-  if (kind !== "moderation" && kind !== "economy") return res.sendStatus(404);
-  const name = String(req.body.name || "").trim(), avatar = String(req.body.avatar_url || "").trim();
-  if (typeof req.body.enabled !== "boolean" || name.length < 1 || name.length > 80 || /discord|clyde/i.test(name)) return res.status(400).json({ error: "Use a name of 1-80 characters without Discord or Clyde." });
-  if (avatar) {
-    try { const url = new URL(avatar); if (url.protocol !== "https:" || url.username || url.password || avatar.length > 2048) throw Error(); }
-    catch { return res.status(400).json({ error: "Use an HTTPS image URL for the avatar." }); }
-  }
-  if (req.body.enabled) {
-    const guild = bot.guilds.cache.get(String(req.params.guildId))!;
-    const channelId = kind === "moderation" ? moderationSettings(guild.id).log_channel_id : settingsFor(guild.id).money_audit_channel_id;
-    if (!channelId) return res.status(400).json({ error: "Choose and save a log channel first." });
-    try {
-      const channel = await guild.channels.fetch(channelId);
-      if (!channel?.isSendable()) throw new Error();
-      await ensureLogWebhook(guild, channel, kind);
-    } catch {
-      return res.status(400).json({ error: "Could not set up the webhook. The bot needs View Channel and Manage Webhooks in a text or announcement log channel." });
-    }
-  }
-  db.prepare("INSERT INTO log_identities (guild_id,kind,enabled,name,avatar_url) VALUES (?,?,?,?,?) ON CONFLICT(guild_id,kind) DO UPDATE SET enabled=excluded.enabled,name=excluded.name,avatar_url=excluded.avatar_url").run(String(req.params.guildId), kind, req.body.enabled ? 1 : 0, name, avatar);
-  res.json(logIdentity(String(req.params.guildId), kind));
-});
-
 app.get("/api/guilds/:guildId/moderation", requireUser, canManage, (req, res) => {
   const guildId = String(req.params.guildId);
   res.json({ settings: moderationSettings(guildId), cases: moderationCases(guildId) });
@@ -210,7 +181,7 @@ app.put("/api/guilds/:guildId/moderation", requireUser, canManage, async (req, r
         }
       }
     }
-    if (channelId && logIdentity(guild.id, "moderation").enabled) {
+    if (channelId) {
       try { await ensureLogWebhook(guild, await guild.channels.fetch(channelId), "moderation"); }
       catch { return res.status(400).json({ error: "Could not set up the moderation webhook. The bot needs Manage Webhooks in the log channel." }); }
     }
@@ -253,7 +224,7 @@ app.get("/api/guilds/:guildId/settings", requireUser, canManage, (req, res) => {
   res.json({ premium: premiumStatus(guild.id), systems: detailedSystems, economySystems: economySystems.map(system => ({ ...system, config: JSON.parse(system.config_json || "{}") })), economySharedNames, channels, ruleChannels, roles, emojis, economy, shopItems, memberCount: guild.memberCount });
 });
 
-app.put("/api/guilds/:guildId/economy", requireUser, canManage, (req, res) => {
+app.put("/api/guilds/:guildId/economy", requireUser, canManage, async (req, res) => {
   const guildId = String(req.params.guildId);
   const guild = bot.guilds.cache.get(guildId)!;
   const applicationEmojis = new Map([["1553368966850813963", "crazygears"], ["1553368950082113536", "alonecrazygears"]]);
@@ -269,6 +240,10 @@ app.put("/api/guilds/:guildId/economy", requireUser, canManage, (req, res) => {
   const maxBankBalance = safeAmount(req.body?.maxBankBalance, 1_000_000);
   const requestedAuditChannel = String(req.body?.moneyAuditChannelId || "");
   const moneyAuditChannelId = guild.channels.cache.has(requestedAuditChannel) && guild.channels.cache.get(requestedAuditChannel)?.isTextBased() ? requestedAuditChannel : null;
+  if (moneyAuditChannelId) {
+    try { await ensureLogWebhook(guild, await guild.channels.fetch(moneyAuditChannelId), "economy"); }
+    catch { return res.status(400).json({ error: "Could not set up the economy webhook. The bot needs View Channel and Manage Webhooks in the log channel." }); }
+  }
   const rawConfig = req.body?.config && typeof req.body.config === "object" && !Array.isArray(req.body.config) ? req.body.config : {};
   const economyConfig = JSON.stringify(Object.fromEntries(Object.entries(rawConfig).slice(0, 100).map(([key, value]) => [key.slice(0, 64), Array.isArray(value) ? value.map(String).slice(0, 100) : typeof value === "boolean" ? value : String(value).slice(0, 500)])));
   settingsFor(guildId);

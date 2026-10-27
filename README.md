@@ -70,6 +70,6 @@ Set DISCORD_REDIRECT_URI to the public site's exact OAuth callback URL; its orig
 
 Before enabling live checkout, test sandbox approval, retry after a failed return, renewal, cancellation, suspension, and webhook delivery with a sandbox buyer. Automated mocked tests do not verify real PayPal account setup.
 
-### Separate log identities
+### Automatic log webhooks
 
-In the dashboard, open Moderation settings or Economy balance settings to enable a separate log identity, set its name and HTTPS avatar image URL, and click Save log identity. Each identity applies to that server and uses its existing log channel. Leave the avatar blank to use the supplied green Modlogs image for moderation or the bot avatar for economy. Moderation log embeds use #77F45F. The bot needs Manage Webhooks in the log channel and creates or reuses its own webhook automatically. If webhook delivery fails, it tries sending the log as the bot and records the failure in the console. The moderation identity is enabled by default; economy is opt-in. Explicit saved choices take precedence.
+Moderation and economy logs automatically use a bot-owned webhook in each configured log channel. Names and avatars are fixed: Crazyland Moderation uses the supplied green Modlogs image, and Crazyland Economy uses the bot avatar. Moderation log embeds use #77F45F. The bot needs View Channel and Manage Webhooks in the log channel. Saving log-channel settings creates or reuses the webhook and reports setup failures. If delivery later fails, the bot attempts to post the log itself and records the failure in the console.

@@ -2103,23 +2103,3 @@ select[data-economy-key="bonusRole"] {
 
 .premium-panel{display:flex;align-items:center;gap:16px;padding:16px;margin-bottom:20px;border:1px solid #41414b;border-radius:12px}.premium-panel p{margin:6px 0;color:#aaa}.premium-panel>div{flex:1}.premium-panel.hidden{display:none}
 
-
-.log-identity {
-  grid-column: 1 / -1;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--discord-border);
-  min-width: 0;
-}
-.log-identity .cardhead { align-items: center; gap: 16px; }
-.log-identity h3 { margin: 0; font-size: 14px; }
-.log-identity .cardhead p { margin: 6px 0 0; }
-.log-identity .switch { flex-shrink: 0; }
-.log-identity .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.log-identity .form-grid > label { min-width: 0; }
-.log-identity input:not([type="checkbox"]) { text-transform: none; letter-spacing: normal; }
-.log-identity .log-identity-note { margin: 16px 0; font-size: 12px; line-height: 1.5; }
-.log-identity-actions { display: flex; justify-content: flex-end; }
-@media (max-width: 700px) {
-  .log-identity .form-grid { grid-template-columns: minmax(0, 1fr); }
-}
