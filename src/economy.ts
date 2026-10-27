@@ -11,9 +11,6 @@ type ShopItem = { id: number; name: string; price: number; description: string; 
 type EconomySystem = { id: number; name: string; currency_symbol: string; starting_balance: number; max_cash_balance: number; max_bank_balance: number; config_json: string };
 type ShopPrice = { system_id: number; amount: number; name: string; currency_symbol: string; config_json: string; join_operator: "and" | "or" };
 
-const account = db.prepare("SELECT cash, bank FROM economy_accounts WHERE guild_id=? AND user_id=?");
-const createAccount = db.prepare("INSERT OR IGNORE INTO economy_accounts (guild_id,user_id,username,cash) VALUES (?,?,?,?)");
-const setAccount = db.prepare("UPDATE economy_accounts SET username=?, cash=?, bank=? WHERE guild_id=? AND user_id=?");
 const addInventory = db.prepare(`INSERT INTO economy_inventory (guild_id,user_id,item_id,quantity) VALUES (?,?,?,1)
   ON CONFLICT(guild_id,user_id,item_id) DO UPDATE SET quantity=quantity+1`);
 const recordTransaction = db.prepare("INSERT INTO economy_transactions (guild_id,user_id,other_user_id,action,amount,details,created_at) VALUES (?,?,?,?,?,?,?)");
@@ -102,7 +99,7 @@ function priceCurrencyName(price: ShopPrice) {
   }
   catch { return price.name; }
 }
-function replyV2(interaction: RepliableInteraction, title: string, body: string, ephemeral = false, separated = true) {
+function replyV2(interaction: RepliableInteraction, title: string, body: string, ephemeral = false) {
   const container = new ContainerBuilder().setAccentColor(0xf45f77);
   container
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${economyEmoji} **${title}**`))
@@ -570,7 +567,7 @@ export async function handleEconomyCommand(interaction: EconomyInteraction) {
   } else if (name === "inventory") {
     const items = db.prepare(`SELECT s.id,s.name,s.description,s.emoji_id,i.quantity FROM economy_inventory i JOIN economy_shop_items s ON s.id=i.item_id WHERE i.guild_id=? AND i.user_id=? AND i.quantity>0 ORDER BY s.name`).all(guildId, interaction.user.id) as Array<{ id: number; name: string; description: string; emoji_id: string | null; quantity: number }>;
     const inventoryName = label(sharedConfig, "inventoryName", "Your inventory");
-    await replyV2(interaction, inventoryName, items.length ? items.map(item => `**${item.quantity} - ${itemIcon(item.emoji_id, interaction)} ${item.name}**\n${item.description || "No description"}`.replace("-  ", "- ")).join("\n\n") : `${inventoryName} is empty.`, true, true);
+    await replyV2(interaction, inventoryName, items.length ? items.map(item => `**${item.quantity} - ${itemIcon(item.emoji_id, interaction)} ${item.name}**\n${item.description || "No description"}`.replace("-  ", "- ")).join("\n\n") : `${inventoryName} is empty.`, true);
   } else if (name === "use") {
     const id = submittedItem;
     if (!id) return void await replyV2(interaction, "Item required", "Choose an item from your inventory.", true);

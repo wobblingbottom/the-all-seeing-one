@@ -405,8 +405,6 @@ app.put("/api/guilds/:guildId/settings", requireUser, canManage, (req, res) => {
   const systemId = Number(b.systemId);
   const ownsSystem = db.prepare("SELECT id FROM leveling_systems WHERE id = ? AND guild_id = ?").get(systemId, guildId);
   if (!ownsSystem) return res.status(404).json({ error: "Leveling system not found" });
-  const min = Math.max(1, Math.min(1000, Number(String(b.minXp ?? "15").split(",")[0].trim()) || 15));
-  const max = Math.max(min, Math.min(1000, Number(String(b.maxXp ?? "25").split(",")[0].trim()) || 25));
   const cooldown = Math.max(5, Math.min(3600, Number(b.cooldownSeconds)));
   const message = String(b.announceMessage ?? "").slice(0, 500);
   const contentFilters = ["any", "text", "image", "video", "link", "file", "embed", "sound", "poll", "sticker", "forward", "word"];
@@ -494,7 +492,7 @@ app.get("/api/guilds/:guildId/leaderboard", requireUser, canManage, async (req, 
     (SELECT COUNT(*) + 1 FROM system_progress higher WHERE higher.system_id=progress.system_id AND higher.xp>progress.xp) AS rank
     FROM system_progress progress WHERE ${where} ORDER BY xp DESC, user_id ASC LIMIT ? OFFSET ?`)
     .all(...parameters, pageSize, (page - 1) * pageSize) as any[];
-  const leaders = await Promise.all(rows.map(async (row, index) => {
+  const leaders = await Promise.all(rows.map(async row => {
     const cachedUser = guild?.members.cache.get(row.user_id)?.user ?? bot.users.cache.get(row.user_id);
     const profileUser = await leaderboardProfile(row.user_id);
     const user = profileUser ?? cachedUser;

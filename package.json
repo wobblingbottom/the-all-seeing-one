@@ -8,7 +8,8 @@
     "start": "node --disable-warning=ExperimentalWarning --import tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "test:moderation": "node --disable-warning=ExperimentalWarning --test tests/moderation.test.cjs",
-    "test:premium": "node --disable-warning=ExperimentalWarning --test tests/premium.test.cjs"
+    "test:premium": "node --disable-warning=ExperimentalWarning --test tests/premium.test.cjs",
+    "test": "node --disable-warning=ExperimentalWarning --import tsx --test tests/*.cjs tests/*.ts"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
